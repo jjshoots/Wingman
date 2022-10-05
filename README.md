@@ -213,7 +213,7 @@ Sequential(
 
 The Neural Blocks module also has functions that can generate single modules, refer to the file itself for more details.
 
-#### `from wingman import ReplayBuffer`
+### `from wingman import ReplayBuffer`
 
 This is a replay buffer designed around Torch's Dataloader class for reinforcement learning projects.
 This allows easy bootstrapping of the Dataloader's excellent shuffling and pre-batching capabilities.
@@ -262,7 +262,7 @@ for batch_num, stuff in enumerate(dataloader):
     dones = gpuize(stuff[4], "cuda:0")
 ```
 
-#### `from wingman import gpuize, cpuize`
+### `from wingman import gpuize, cpuize`
 
 These are quality of life standalone functions.
 
@@ -292,8 +292,8 @@ tensor([[0.2839, 0.5094, 0.5543, 0.4561, 0.8252],
 If used in conjunction with Wingman, it's possibly to simply do `gpuize(foo, set.device)` when `set` is defined as done earlier.
 
 ****
+****
 > Why does every plane have two pilots?
 > Really, you only need one pilot.
 > Let's take out the second pilot.
 > Let's let the bloody computer fly it.
-****
