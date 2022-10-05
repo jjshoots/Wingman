@@ -268,7 +268,7 @@ These are quality of life standalone functions.
 
 ```python
 >>> import numpy as np
->>> from wingman import gpuize
+>>> from wingman import gpuize, cpuize
 >>> foo = np.random.random((5, 5))
 >>> print(foo)
 
@@ -286,10 +286,18 @@ tensor([[0.2839, 0.5094, 0.5543, 0.4561, 0.8252],
         [0.7008, 0.9278, 0.9839, 0.7695, 0.7289],
         [0.4770, 0.5497, 0.2211, 0.7244, 0.4257],
         [0.7833, 0.8489, 0.6853, 0.6188, 0.1356]], device='cuda:0')
->>>
+
+>>> pae = cpuize(bar, "cuda:0")
+>>> print(pae)
+
+[[0.28392764 0.50936983 0.55433616 0.45614518 0.82523046]
+ [0.77437072 0.20900382 0.86220494 0.69071239 0.94863786]
+ [0.70082865 0.92780018 0.98392965 0.76945165 0.72886401]
+ [0.47702485 0.54968522 0.22110942 0.72436276 0.42574472]
+ [0.78330221 0.84888837 0.68529167 0.61878902 0.13556213]]
 ```
 
-If used in conjunction with Wingman, it's possibly to simply do `gpuize(foo, set.device)` when `set` is defined as done earlier.
+If used in conjunction with Wingman, it's possible to simply do `gpuize(foo, set.device)` when `set` is defined as done earlier.
 
 ****
 ****
