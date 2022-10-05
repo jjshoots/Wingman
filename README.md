@@ -22,7 +22,7 @@ Instead of wrapping your models with wrappers or designing your models around Wi
 
 ## Modules
 
-Wingman has two core modules and several static functions, all of which can be used independently or in conjunction.
+Wingman has several core modules and static functions, all of which can be used independently or in conjunction.
 
 
 ### `from wingman import Wingman`
@@ -113,3 +113,101 @@ After defining your `settings.yaml` file, the basic usage of Wingman is as follo
             model.save(model_file)
             optim.save(optim_file)
 ```
+
+### `from wingman import Neural_blocks`
+
+Neural blocks is a module for quickly prototyping neural network architectures.
+It offers several easier methods of defining standardized modules:
+
+#### Simple 3-layer MLP with ReLU activation
+```python
+>>> from wingman import Neural_blocks
+>>> features = [4, 16, 64, 3]
+>>> activation = ["relu", "tanh", "identity"]
+>>> norm = "batch"
+>>> bias = True
+>>> MLP = Neural_blocks.generate_linear_stack(features, activation, norm, bias)
+>>> print(MLP)
+
+Sequential(
+  (0): Sequential(
+    (0): BatchNorm1d(4, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (1): Linear(in_features=4, out_features=16, bias=True)
+    (2): ReLU()
+  )
+  (1): Sequential(
+    (0): BatchNorm1d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (1): Linear(in_features=16, out_features=64, bias=True)
+    (2): Tanh()
+  )
+  (2): Sequential(
+    (0): BatchNorm1d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (1): Linear(in_features=64, out_features=3, bias=True)
+    (2): Identity()
+  )
+)
+```
+
+#### 4 layer convolutional network with same padding and MaxPool2d across the last two layers
+```python
+>>> from wingman import Neural_blocks
+>>> channels = [3, 16, 32, 64, 1]
+>>> kernels = [3, 1, 3, 1]
+>>> pooling = [0, 0, 2, 2]
+>>> activation = ["relu", "relu", "tanh", "tanh"]
+>>> padding = None # this is equivalent to same padding
+>>> norm = "batch"
+>>> CNN = Neural_blocks.generate_conv_stack(channels, kernels, pooling, activation, padding, norm)
+>>> print(CNN)
+
+Sequential(
+  (0): Sequential(
+    (0): BatchNorm2d(3, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (1): Conv2d(3, 16, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (2): ReLU()
+  )
+  (1): Sequential(
+    (0): BatchNorm2d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (1): Conv2d(16, 32, kernel_size=(1, 1), stride=(1, 1))
+    (2): ReLU()
+  )
+  (2): Sequential(
+    (0): BatchNorm2d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (1): Conv2d(32, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (2): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (3): Tanh()
+  )
+  (3): Sequential(
+    (0): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (1): Conv2d(64, 1, kernel_size=(1, 1), stride=(1, 1))
+    (2): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (3): Tanh()
+  )
+)
+```
+
+#### 2 layer transposed convolutional network
+```python
+>>> from wingman import Neural_blocks
+>>> channels = [64, 32, 3]
+>>> kernels = [4, 4]
+>>> padding = [1, 1]
+>>> stride = [2, 2]
+>>> activation = ["lrelu", "lrelu"]
+>>> norm = "non"
+>>> TCNN = Neural_blocks.generate_deconv_stack(channels, kernels, padding, stride, activation, norm)
+>>> print(TCNN)
+
+Sequential(
+  (0): Sequential(
+    (0): ConvTranspose2d(64, 32, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+    (1): LeakyReLU(negative_slope=0.01)
+  )
+  (1): Sequential(
+    (0): ConvTranspose2d(32, 3, kernel_size=(4, 4), stride=(2, 2), padding=(1, 1))
+    (1): LeakyReLU(negative_slope=0.01)
+  )
+)
+```
+
+The Neural Blocks module also has functions that can generate single modules, refer to the file itself for more details.
