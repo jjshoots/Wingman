@@ -106,8 +106,13 @@ After defining your `settings.yaml` file, the basic usage of Wingman is as follo
         loss = YOUR_LOSS_FUNCTION(model)
         ...
 
+        # when wandb is enabled (via `wandb = true` in the yaml file)
+        # logging can be done by passing Wingman a dictionary
+        # the dictionary is logged to wandb and then cleared everytime `.checkpoint()` is called
+        wm.log = {"log": 5, "these": 2.34, "values": -5.432}
+
         # let Wingman handle checkpointing for you
-        update_weights, model_file, optim_file = self.checkpoint(loss, batch_number, epoch_number)
+        update_weights, model_file, optim_file = wm.checkpoint(loss, batch_number, epoch_number)
         if update_weights:
             # if Wingman deems that the weights should be checkpointed, it returns
             # a string of where the weight files should go for it to be found later
