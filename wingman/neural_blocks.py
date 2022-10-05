@@ -4,7 +4,12 @@ import torch.nn as nn
 
 
 class Neural_blocks:
+    """Neural_blocks.
+    """
+
     def __init__(self):
+        """__init__.
+        """
         pass
 
     @classmethod
@@ -19,6 +24,18 @@ class Neural_blocks:
         padding=None,
         norm="non",
     ):
+        """conv_module.
+
+        Args:
+            in_channel:
+            out_channel:
+            kernel_size:
+            pooling:
+            activation:
+            pool_method:
+            padding:
+            norm:
+        """
         module_list = []
 
         # batch norm
@@ -63,6 +80,15 @@ class Neural_blocks:
     def linear_module(
         cls, in_features, out_features, activation, norm="non", bias=True
     ):
+        """linear_module.
+
+        Args:
+            in_features:
+            out_features:
+            activation:
+            norm:
+            bias:
+        """
         module_list = []
 
         # batch norm
@@ -90,6 +116,17 @@ class Neural_blocks:
         activation,
         norm="non",
     ):
+        """deconv_module.
+
+        Args:
+            in_channel:
+            out_channel:
+            kernel_size:
+            padding:
+            stride:
+            activation:
+            norm:
+        """
         module_list = []
 
         # batch norm
@@ -116,6 +153,13 @@ class Neural_blocks:
 
     @classmethod
     def cond_gated_masked_conv_module(cls, channel_size, kernel_size, mask_type):
+        """cond_gated_masked_conv_module.
+
+        Args:
+            channel_size:
+            kernel_size:
+            mask_type:
+        """
         module = CondGatedMaskedConv2d(
             in_channels=channel_size,
             out_channels=channel_size,
@@ -127,6 +171,11 @@ class Neural_blocks:
 
     @classmethod
     def get_activation(cls, activation):
+        """get_activation.
+
+        Args:
+            activation:
+        """
         if activation == "sigmoid":
             return nn.Sigmoid()
         elif activation == "relu":
@@ -142,6 +191,13 @@ class Neural_blocks:
 
     @classmethod
     def get_normalization(cls, activation, num_features, dimension):
+        """get_normalization.
+
+        Args:
+            activation:
+            num_features:
+            dimension:
+        """
         if activation == "batch":
             if dimension == 1:
                 return nn.BatchNorm1d(num_features)
@@ -258,6 +314,15 @@ class Neural_blocks:
         pooling_description,
         activation_description,
     ):
+        """generate_conv_res_stack.
+
+        Args:
+            layers_per_block:
+            channels_description:
+            kernels_description:
+            pooling_description:
+            activation_description:
+        """
 
         blocks = []
         intermediates = []
@@ -438,6 +503,12 @@ class Neural_blocks:
 
     @classmethod
     def forward_cascade(cls, cascade, input):
+        """forward_cascade.
+
+        Args:
+            cascade:
+            input:
+        """
         # fast way to compute the output from a cascade
         output = [input]
         for i in range(len(cascade)):
@@ -447,6 +518,12 @@ class Neural_blocks:
 
     @classmethod
     def forward_parallel(cls, cascade, input):
+        """forward_parallel.
+
+        Args:
+            cascade:
+            input:
+        """
         # parallel run the modules
         output = [None] * len(cascade)
 
@@ -464,6 +541,13 @@ class MaskedConv2d(nn.Conv2d):
     """
 
     def __init__(self, mask_type, *args, **kwargs):
+        """__init__.
+
+        Args:
+            mask_type:
+            args:
+            kwargs:
+        """
         super().__init__(*args, **kwargs)
         assert mask_type in ["A", "B"]
         self.register_buffer(
@@ -479,12 +563,28 @@ class MaskedConv2d(nn.Conv2d):
         self.mask[:, :, h // 2 + 1 :] = 0
 
     def forward(self, x):
+        """forward.
+
+        Args:
+            x:
+        """
         self.weight.data *= self.mask
         return super().forward(x)
 
 
 class CondGatedMaskedConv2d(nn.Module):
+    """CondGatedMaskedConv2d.
+    """
+
     def __init__(self, in_channels, out_channels, kernel_size, mask_type):
+        """__init__.
+
+        Args:
+            in_channels:
+            out_channels:
+            kernel_size:
+            mask_type:
+        """
         super().__init__()
         self.masked_conv_1 = MaskedConv2d(
             mask_type=mask_type,
@@ -524,10 +624,24 @@ class CondGatedMaskedConv2d(nn.Module):
 
 
 class GatedLinear(nn.Module):
+    """GatedLinear.
+    """
+
     def __init__(self, *args, **kwargs):
+        """__init__.
+
+        Args:
+            args:
+            kwargs:
+        """
         super().__init__()
         self.value = nn.Linear(*args, **kwargs)
         self.gate = nn.Linear(*args, **kwargs)
 
     def forward(self, x):
+        """forward.
+
+        Args:
+            x:
+        """
         return torch.sigmoid(self.gate(x)) * self.value(x)
