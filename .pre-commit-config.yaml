@@ -11,13 +11,13 @@ repos:
         args:
           - --ignore-words-list=magent
           - --skip=*.css,*.js,*.map,*.scss,*svg
+          - --exclude-file=./README.md
   - repo: https://gitlab.com/PyCQA/flake8
     rev: 5.0.4
     hooks:
       - id: flake8
         args:
           - '--per-file-ignores=*/__init__.py:F401'
-          - '--exclude-file=./README.md'
           - --extend-ignore=E203
           - --max-complexity=205
           - --max-line-length=300
