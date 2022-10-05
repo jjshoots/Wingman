@@ -17,6 +17,7 @@ repos:
       - id: flake8
         args:
           - '--per-file-ignores=*/__init__.py:F401'
+          - '--exclude-file=./README.md'
           - --extend-ignore=E203
           - --max-complexity=205
           - --max-line-length=300
