@@ -255,9 +255,38 @@ dataloader = torch.utils.data.DataLoader(
 
 # easily treat the replay buffer as an iterable that we can iterate through
 for batch_num, stuff in enumerate(dataloader):
-    observations = gpuize(stuff[0], set.device)
-    actions = gpuize(stuff[1], set.device)
-    rewards = gpuize(stuff[2], set.device)
-    next_states = gpuize(stuff[3], set.device)
-    dones = gpuize(stuff[4], set.device)
+    observations = gpuize(stuff[0], "cuda:0")
+    actions = gpuize(stuff[1], "cuda:0")
+    rewards = gpuize(stuff[2], "cuda:0")
+    next_states = gpuize(stuff[3], "cuda:0")
+    dones = gpuize(stuff[4], "cuda:0")
 ```
+
+#### `from wingman import gpuize, cpuize`
+
+These are quality of life standalone functions.
+
+```python
+>>> import numpy as np
+>>> from wingman import gpuize
+>>> foo = np.random.random((5, 5))
+>>> print(foo)
+
+[[0.28392764 0.50936983 0.55433616 0.45614518 0.82523046]
+ [0.77437072 0.20900382 0.86220494 0.69071239 0.94863786]
+ [0.70082865 0.92780018 0.98392965 0.76945165 0.72886401]
+ [0.47702485 0.54968522 0.22110942 0.72436276 0.42574472]
+ [0.78330221 0.84888837 0.68529167 0.61878902 0.13556213]]
+
+>>> bar = gpuize(foo, "cuda:0")
+>>> print(bar)
+
+tensor([[0.2839, 0.5094, 0.5543, 0.4561, 0.8252],
+        [0.7744, 0.2090, 0.8622, 0.6907, 0.9486],
+        [0.7008, 0.9278, 0.9839, 0.7695, 0.7289],
+        [0.4770, 0.5497, 0.2211, 0.7244, 0.4257],
+        [0.7833, 0.8489, 0.6853, 0.6188, 0.1356]], device='cuda:0')
+>>>
+```
+
+If used in conjunction with Wingman, it's possibly to simply do `gpuize(foo, set.device)` when `set` is defined as done earlier.
