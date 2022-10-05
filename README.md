@@ -81,19 +81,20 @@ After defining your `settings.yaml` file, the basic usage of Wingman is as follo
     from wingman import Wingman
 
     # initialize Wingman and get all the parameters from the `settings.yaml` file
-    helper = Wingman("./settings.yaml")
-    set = helper.set
+    wm = Wingman("./settings.yaml")
+    set = wm.set
 
     # load the model and optimizer, `set.device` is automatically generated
     model = Model(set.YOUR_PARAM, set.YOUR_OTHER_PARAM).to(set.device)
-    optim = optimizer.AdamW(model.parameters(), lr=set.YOUR_OTHER_PARAM, amsgrad=True)
+    optim = optimizer.AdamW(model.parameters(), lr=set.YOUR_LEARNING_RATE_PARAM, amsgrad=True)
 
     # we can check if we have trained this model before, and if we have, just load it
     # this checking is done using the `version_number` param, if `latest=True` is set,
-    # Wingman automatically searches for the latest model checkpoint
+    # Wingman automatically searches for the latest model checkpoint,
+    # otherwise, Wingman uses the checkpoint specified by `mark_number`
     have_file, weight_file, optim_file = self.get_weight_files(latest=True)
     if have_file:
-        # wingman simply returns a string of where the weight files are
+        # Wingman simply returns a string of where the weight files are
         # no unnecessary wrapping!
         model.load(model_file)
         optim.load(optim_file)
@@ -211,3 +212,52 @@ Sequential(
 ```
 
 The Neural Blocks module also has functions that can generate single modules, refer to the file itself for more details.
+
+#### `from wingman import ReplayBuffer`
+
+This is a replay buffer designed around Torch's Dataloader class for reinforcement learning projects.
+This allows easy bootstrapping of the Dataloader's excellent shuffling and pre-batching capabilities.
+In addition, all the data is stored as a numpy array in a contiguous block of memory, allowing very fast retrieval.
+ReplayBuffer also doesn't put any limits on tuple length per transition; some people prefer to store ${S, A, R, S'}$, some prefer to store ${S, A, R, S', A'}$ - ReplayBuffer doesn't care!
+The length of the tuple can be as long or as short as you want, as long as every tuple fed in is the same length and each element of the tuple is the same shape.
+There is no need to predefine the shape of the inputs that you want to put in the ReplayBuffer, it automatically infers the shape and computes memory usage upon the first tuple stored.
+The basic usage of the ReplayBuffer is as follows:
+
+```python
+import torch
+
+from wingman import ReplayBuffer
+
+# we define the replay buffer to be able to store 1000 tuples of information
+memory = ReplayBuffer(mem_size=1000)
+
+# get the first observation from the environment
+next_obs = env.reset()
+
+# iterate until the environment is complete
+while env.done is False:
+    # rollover the observation
+    obs = next_obs
+
+    # get an action from the policy
+    act = policy(obs)
+
+    # sample a new transition
+    next_obs, rew, dne, next_lbl = env.step(act)
+
+    # store stuff in the replay buffer
+    memory.push((obs, act, rew, next_obs, dne))
+
+# perform training using the buffer
+dataloader = torch.utils.data.DataLoader(
+    memory, batch_size=32, shuffle=True, drop_last=False
+)
+
+# easily treat the replay buffer as an iterable that we can iterate through
+for batch_num, stuff in enumerate(dataloader):
+    observations = gpuize(stuff[0], set.device)
+    actions = gpuize(stuff[1], set.device)
+    rewards = gpuize(stuff[2], set.device)
+    next_states = gpuize(stuff[3], set.device)
+    dones = gpuize(stuff[4], set.device)
+```
