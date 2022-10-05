@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="Wingman",
-    version="0.0.1",
+    version="0.0.1a",
     author="Jet",
     author_email="taijunjet[at]hotmail[dot]com",
     description="Wingman for all your AI applications",
