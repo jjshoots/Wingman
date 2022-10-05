@@ -290,3 +290,10 @@ tensor([[0.2839, 0.5094, 0.5543, 0.4561, 0.8252],
 ```
 
 If used in conjunction with Wingman, it's possibly to simply do `gpuize(foo, set.device)` when `set` is defined as done earlier.
+
+****
+> Why does every plane have two pilots?
+> Really, you only need one pilot.
+> Let's take out the second pilot.
+> Let's let the bloody computer fly it.
+****
