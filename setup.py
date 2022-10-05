@@ -4,7 +4,7 @@ setup(
     name="Wingman",
     version="0.0.2",
     author="Jet",
-    author_email="taijunjet[at]hotmail[dot]com",
+    author_email="taijunjet@hotmail.com",
     description="Wingman for all your AI applications",
     url="https://github.com/jjshoots/Wingman",
     license_files=("LICENSE.txt"),
