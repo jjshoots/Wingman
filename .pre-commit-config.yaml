@@ -16,7 +16,7 @@ repos:
     hooks:
       - id: flake8
         args:
-          - '--per-file-ignores=*/__init__.py:F401 test/all_parameter_combs_test.py:F405 pettingzoo/classic/go/go.py:W605'
+          - '--per-file-ignores=*/__init__.py:F401'
           - --extend-ignore=E203
           - --max-complexity=205
           - --max-line-length=300
@@ -49,7 +49,7 @@ repos:
           - --count
           # TODO: Remove ignoring rules D101, D102, D103, D105
           - --add-ignore=D100,D107,D101,D102,D103,D105
-        exclude: "__init__.py$|^pettingzoo.test|^docs"
+        exclude: "__init__.py"
         additional_dependencies: ["toml"]
   - repo: local
     hooks:
@@ -59,6 +59,4 @@ repos:
         language: node
         pass_filenames: false
         types: [python]
-        args:
-          - --dependencies
         additional_dependencies: ["pyright"]
