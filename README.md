@@ -218,7 +218,7 @@ The Neural Blocks module also has functions that can generate single modules, re
 This is a replay buffer designed around Torch's Dataloader class for reinforcement learning projects.
 This allows easy bootstrapping of the Dataloader's excellent shuffling and pre-batching capabilities.
 In addition, all the data is stored as a numpy array in a contiguous block of memory, allowing very fast retrieval.
-ReplayBuffer also doesn't put any limits on tuple length per transition; some people prefer to store ${S, A, R, S'}$, some prefer to store ${S, A, R, S', A'}$ - ReplayBuffer doesn't care!
+ReplayBuffer also doesn't put any limits on tuple length per transition; some people prefer to store $\{S, A, R, S'\}$, some prefer to store $\{S, A, R, S', A'\}$ - ReplayBuffer doesn't care!
 The length of the tuple can be as long or as short as you want, as long as every tuple fed in is the same length and each element of the tuple is the same shape.
 There is no need to predefine the shape of the inputs that you want to put in the ReplayBuffer, it automatically infers the shape and computes memory usage upon the first tuple stored.
 The basic usage of the ReplayBuffer is as follows:
