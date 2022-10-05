@@ -17,8 +17,6 @@ on:
 jobs:
   build-wheels:
     runs-on: ${{ matrix.os }}
-    permissions:
-      contents: read
     strategy:
       matrix:
         include:
