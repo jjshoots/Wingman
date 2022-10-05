@@ -60,5 +60,5 @@ repos:
         pass_filenames: false
         types: [python]
         args:
-          - --ignoreexternal
+          - --dependencies
         additional_dependencies: ["pyright"]
