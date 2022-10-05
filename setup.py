@@ -14,6 +14,5 @@ setup(
     python_requires=">=3.7, <3.11",
     packages=["wingman"],
     include_package_data=True,
-    install_requires=[
-        "numpy", "torch", "wandb", "pyyaml"],
+    install_requires=["numpy", "torch", "wandb", "pyyaml"],
 )

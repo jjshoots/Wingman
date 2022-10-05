@@ -3,9 +3,7 @@ from torch.utils.data import Dataset
 
 
 class ReplayBuffer(Dataset):
-    """
-    Replay Buffer implementation of a Torch dataset
-    """
+    """Replay Buffer implementation of a Torch dataset."""
 
     def __init__(self, mem_size):
         self.memory = []

@@ -55,7 +55,6 @@ class Wingman:
             settings_yaml (str): location of where the settings yaml is described
             experiment_description (str): optional description of the experiment
         """
-
         # save our experiment description
         self.settings_yaml = settings_yaml
         self.experiment_description = experiment_description
@@ -105,15 +104,15 @@ class Wingman:
         )
         self.optim_file = os.path.join(
             self.version_directory,
-            f"optimizer.pth",
+            "optimizer.pth",
         )
         self.status_file = os.path.join(
             self.version_directory,
-            f"lowest_loss.npy",
+            "lowest_loss.npy",
         )
         self.intermediary_file = os.path.join(
             self.version_directory,
-            f"weights_intermediary.pth",
+            "weights_intermediary.pth",
         )
 
         print(
@@ -127,7 +126,7 @@ class Wingman:
             # new training session when there's no training log
             os.path.join(self.version_directory, "training_log.txt")
         ):
-            print(f"Weights directory not found, generating new one in 3 seconds...")
+            print("Weights directory not found, generating new one in 3 seconds...")
             time.sleep(3)
             os.makedirs(self.version_directory)
 
@@ -136,12 +135,10 @@ class Wingman:
             "a",
         ) as f:
             f.write(f"New Session, Net Version {self.version_number} \n")
-            f.write(f"Epoch, Batch, Running Loss, Lowest Running Loss, Mark Number \n")
+            f.write("Epoch, Batch, Running Loss, Lowest Running Loss, Mark Number \n")
 
     def __get_device(self):
-        """
-        gets gpu if available otherwise cpu
-        """
+        """__get_device."""
         device = "cpu"
         if torch.cuda.is_available():
             device = torch.device("cuda:0")
@@ -201,7 +198,7 @@ class Wingman:
             )
 
             # also save the code if wandb
-            wandb.run.log_code(".", exclude_fn=lambda path: "venv" in path)
+            wandb.run.log_code(".", exclude_fn=lambda path: "venv" in path)  # type: ignore
 
             # set to be consistent with wandb config
             set = wandb.config
@@ -233,7 +230,6 @@ class Wingman:
         Returns:
             tuple[bool, Optional[str], Optional[str]]:
         """
-
         # indicator on whether we need to save the weights
         update = False
 
@@ -353,7 +349,6 @@ class Wingman:
         Returns:
             tuple[bool, Optional[str], Optional[str]]:
         """
-
         have_file = False
 
         # if we don't need the latest file, get the one specified
@@ -394,7 +389,7 @@ class Wingman:
 
             have_file = True
         else:
-            print(f"No weights file found, generating new one during training.")
+            print("No weights file found, generating new one during training.")
             have_file = False
 
         if have_file:

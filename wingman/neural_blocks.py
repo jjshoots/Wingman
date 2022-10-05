@@ -1,40 +1,42 @@
 #!/usr/bin/env python3
-import torch
+from typing import Optional
+
 import torch.nn as nn
 
 
 class Neural_blocks:
-    """Neural_blocks.
-    """
+    """Neural_blocks."""
 
     def __init__(self):
-        """__init__.
-        """
+        """__init__."""
         pass
 
     @classmethod
     def conv_module(
         cls,
-        in_channel,
-        out_channel,
-        kernel_size,
-        pooling,
-        activation,
-        pool_method="max",
-        padding=None,
-        norm="non",
-    ):
+        in_channel: int,
+        out_channel: int,
+        kernel_size: int,
+        pooling: int,
+        activation: str,
+        pool_method: str = "max",
+        padding: Optional[int] = None,
+        norm: str = "non",
+    ) -> nn.Sequential:
         """conv_module.
 
         Args:
-            in_channel:
-            out_channel:
-            kernel_size:
-            pooling:
-            activation:
-            pool_method:
-            padding:
-            norm:
+            in_channel (int): in_channel
+            out_channel (int): out_channel
+            kernel_size (int): kernel_size
+            pooling (int): pooling
+            activation (str): activation
+            pool_method (str): pool_method
+            padding (Optional[int]): padding
+            norm (str): norm
+
+        Returns:
+            nn.Sequential:
         """
         module_list = []
 
@@ -78,16 +80,24 @@ class Neural_blocks:
 
     @classmethod
     def linear_module(
-        cls, in_features, out_features, activation, norm="non", bias=True
-    ):
+        cls,
+        in_features: int,
+        out_features: int,
+        activation: str,
+        norm: str = "non",
+        bias: bool = True,
+    ) -> nn.Sequential:
         """linear_module.
 
         Args:
-            in_features:
-            out_features:
-            activation:
-            norm:
-            bias:
+            in_features (int): in_features
+            out_features (int): out_features
+            activation (str): activation
+            norm (str): norm
+            bias (bool): bias
+
+        Returns:
+            nn.Sequential:
         """
         module_list = []
 
@@ -108,24 +118,27 @@ class Neural_blocks:
     @classmethod
     def deconv_module(
         cls,
-        in_channel,
-        out_channel,
-        kernel_size,
-        padding,
-        stride,
-        activation,
-        norm="non",
-    ):
+        in_channel: int,
+        out_channel: int,
+        kernel_size: int,
+        padding: int,
+        stride: int,
+        activation: str,
+        norm: str = "non",
+    ) -> nn.Sequential:
         """deconv_module.
 
         Args:
-            in_channel:
-            out_channel:
-            kernel_size:
-            padding:
-            stride:
-            activation:
-            norm:
+            in_channel (int): in_channel
+            out_channel (int): out_channel
+            kernel_size (int): kernel_size
+            padding (int): padding
+            stride (int): stride
+            activation (str): activation
+            norm (str): norm
+
+        Returns:
+            nn.Sequential:
         """
         module_list = []
 
@@ -152,29 +165,14 @@ class Neural_blocks:
         return nn.Sequential(*module_list)
 
     @classmethod
-    def cond_gated_masked_conv_module(cls, channel_size, kernel_size, mask_type):
-        """cond_gated_masked_conv_module.
-
-        Args:
-            channel_size:
-            kernel_size:
-            mask_type:
-        """
-        module = CondGatedMaskedConv2d(
-            in_channels=channel_size,
-            out_channels=channel_size,
-            kernel_size=kernel_size,
-            mask_type=mask_type,
-        )
-
-        return module
-
-    @classmethod
-    def get_activation(cls, activation):
+    def get_activation(cls, activation: str) -> nn.Module:
         """get_activation.
 
         Args:
-            activation:
+            activation (str): activation
+
+        Returns:
+            nn.Module:
         """
         if activation == "sigmoid":
             return nn.Sigmoid()
@@ -190,13 +188,18 @@ class Neural_blocks:
             raise NotImplementedError
 
     @classmethod
-    def get_normalization(cls, activation, num_features, dimension):
+    def get_normalization(
+        cls, activation: str, num_features: int, dimension: int
+    ) -> nn.Module:
         """get_normalization.
 
         Args:
-            activation:
-            num_features:
-            dimension:
+            activation (str): activation
+            num_features (int): num_features
+            dimension (int): dimension
+
+        Returns:
+            nn.Module:
         """
         if activation == "batch":
             if dimension == 1:
@@ -211,15 +214,25 @@ class Neural_blocks:
     @classmethod
     def generate_conv_stack(
         cls,
-        channels_description,
-        kernels_description,
-        pooling_description,
-        activation_description,
-        padding=None,
+        channels_description: list[int],
+        kernels_description: list[int],
+        pooling_description: list[int],
+        activation_description: list[str],
+        padding: Optional[int] = None,
         norm="non",
-    ):
-        """
-        conv -> conv -> conv -> ...
+    ) -> nn.Sequential:
+        """generate_conv_stack.
+
+        Args:
+            channels_description (list[int]): channels_description
+            kernels_description (list[int]): kernels_description
+            pooling_description (list[int]): pooling_description
+            activation_description (list[str]): activation_description
+            padding (Optional[int]): padding
+            norm:
+
+        Returns:
+            nn.Sequential:
         """
         network_depth = len(channels_description) - 1
 
@@ -248,15 +261,25 @@ class Neural_blocks:
     @classmethod
     def generate_deconv_stack(
         cls,
-        channels_description,
-        kernels_description,
-        padding_description,
-        stride_description,
-        activation_description,
-        norm="non",
-    ):
-        """
-        conv -> conv -> conv -> ...
+        channels_description: list[int],
+        kernels_description: list[int],
+        padding_description: list[int],
+        stride_description: list[int],
+        activation_description: list[str],
+        norm: str = "non",
+    ) -> nn.Sequential:
+        """generate_deconv_stack.
+
+        Args:
+            channels_description (list[int]): channels_description
+            kernels_description (list[int]): kernels_description
+            padding_description (list[int]): padding_description
+            stride_description (list[int]): stride_description
+            activation_description (list[str]): activation_description
+            norm (str): norm
+
+        Returns:
+            nn.Sequential:
         """
         network_depth = len(channels_description) - 1
 
@@ -284,178 +307,23 @@ class Neural_blocks:
         return nn.Sequential(*module_list)
 
     @classmethod
-    def generate_cond_gated_masked_conv_stack(
-        cls, channels_description, masks_description, kernels_description
-    ):
-        """
-         |       |       |
-         v       v       v
-        conv -> conv -> conv -> ...
-        """
-
-        network_depth = len(masks_description)
-
-        module_list = nn.ModuleList()
-        for i in range(network_depth):
-            module_list.append(
-                cls.cond_gated_masked_conv_module(
-                    channels_description, kernels_description, masks_description[i]
-                )
-            )
-
-        return module_list
-
-    @classmethod
-    def generate_conv_res_stack(
+    def generate_linear_stack(
         cls,
-        layers_per_block,
-        channels_description,
-        kernels_description,
-        pooling_description,
-        activation_description,
-    ):
-        """generate_conv_res_stack.
+        features_description: list[int],
+        activation_description: list[str],
+        norm: str = "non",
+        bias: bool = True,
+    ) -> nn.Sequential:
+        """generate_linear_stack.
 
         Args:
-            layers_per_block:
-            channels_description:
-            kernels_description:
-            pooling_description:
-            activation_description:
-        """
+            features_description (list[int]): features_description
+            activation_description (list[str]): activation_description
+            norm (str): norm
+            bias (bool): bias
 
-        blocks = []
-        intermediates = []
-
-        for i in range(len(channels_description) - 1):
-            _kernels = []
-            _activation = []
-
-            # generate the intermediate layers
-            _channels = [channels_description[i]] + [channels_description[i + 1]]
-            _kernels = [kernels_description]
-            _pooling = [pooling_description]
-            _activation = [activation_description]
-            intermediate = cls.generate_conv_stack(
-                _channels, _kernels, _pooling, _activation
-            )
-
-            # these operations are on python lists so + means concat and * means repeat
-            _channels = [channels_description[i + 1]] * (layers_per_block + 1)
-            _kernels = [kernels_description] * layers_per_block
-            _pooling = [0] * layers_per_block
-            _activation = [activation_description] * layers_per_block
-
-            # generate the conv layers
-            block = cls.generate_conv_stack(_channels, _kernels, _pooling, _activation)
-
-            blocks = blocks + [block]
-            intermediates = intermediates + [intermediate]
-
-        return nn.ModuleList(blocks), nn.ModuleList(intermediates)
-
-    @classmethod
-    def generate_conv_cascade(
-        cls,
-        channels_description,
-        kernels_description,
-        pooling_description,
-        activation_description,
-    ):
-        """
-          |
-          V
-        conv ->
-          |
-          V
-        conv ->
-          |
-          V
-        conv ->
-          |
-          V
-        conv ->
-        """
-        network_depth = len(channels_description) - 1
-
-        assert (
-            network_depth == len(kernels_description)
-            and network_depth == len(activation_description)
-            and network_depth == len(pooling_description)
-        ), "All network descriptions must be of the same size"
-
-        # a place to strore our cascade
-        cascade = []
-
-        # the cascade is made up of module, so we use this to store the module
-        module_list = []
-        for i in range(network_depth):
-            module_list.append
-            (
-                cls.conv_module(
-                    channels_description[i],
-                    channels_description[i + 1],
-                    kernels_description[i],
-                    pooling_description[i],
-                    activation_description[i],
-                )
-            )
-
-            cascade.append(nn.Sequential(*module_list))
-            module_list = []
-
-        return nn.ModuleList(cascade)
-
-    @classmethod
-    def generate_conv_parallel(
-        cls,
-        channels_description,
-        kernels_description,
-        pooling_description,
-        activation_description,
-    ):
-        """
-        -> conv ->
-        -> conv ->
-        -> conv ->
-        -> conv ->
-        """
-        network_depth = len(channels_description)
-
-        assert (
-            network_depth == len(kernels_description)
-            and network_depth == len(activation_description)
-            and network_depth == len(pooling_description)
-        ), "All network descriptions must be of the same size"
-
-        # a place to strore our cascade
-        cascade = []
-
-        # the cascade is made up of module, so we use this to store the module
-        module_list = []
-        for i in range(network_depth):
-            module_list.append
-            (
-                cls.conv_module(
-                    channels_description[i],
-                    channels_description[i],
-                    kernels_description[i],
-                    pooling_description[i],
-                    activation_description[i],
-                )
-            )
-
-            cascade.append(nn.Sequential(*module_list))
-            module_list = []
-
-        return nn.ModuleList(cascade)
-
-    @classmethod
-    def generate_linear_stack(
-        cls, features_description, activation_description, norm="non", bias=True
-    ):
-        """
-        linear -> linear -> linear -> ...
+        Returns:
+            nn.Sequential:
         """
         network_depth = len(features_description) - 1
 
@@ -476,172 +344,3 @@ class Neural_blocks:
             )
 
         return nn.Sequential(*module_list)
-
-    @classmethod
-    def generate_gated_linear_stack(cls, features_description, norm="non"):
-        """
-        gated_linear -> gated_linear -> gated_linear -> ...
-        """
-        network_depth = len(features_description) - 1
-
-        module_list = []
-        for i in range(network_depth):
-
-            # batch norm
-            if norm != "non":
-                module_list.append(
-                    cls.get_normalization(
-                        norm, num_features=features_description[i], dimension=2
-                    )
-                )
-
-            module_list.append(
-                GatedLinear(features_description[i], features_description[i + 1])
-            )
-
-        return nn.Sequential(*module_list)
-
-    @classmethod
-    def forward_cascade(cls, cascade, input):
-        """forward_cascade.
-
-        Args:
-            cascade:
-            input:
-        """
-        # fast way to compute the output from a cascade
-        output = [input]
-        for i in range(len(cascade)):
-            output.append(cascade[i](output[i]))
-
-        return output
-
-    @classmethod
-    def forward_parallel(cls, cascade, input):
-        """forward_parallel.
-
-        Args:
-            cascade:
-            input:
-        """
-        # parallel run the modules
-        output = [None] * len(cascade)
-
-        for i in range(len(cascade)):
-            output[i] = cascade[i](input[i])
-
-        return output
-
-
-class MaskedConv2d(nn.Conv2d):
-    """
-    Implementation by jzbontar/pixelcnn-pytorch
-
-    mask_type: must be 'A' or 'B' (see [1])
-    """
-
-    def __init__(self, mask_type, *args, **kwargs):
-        """__init__.
-
-        Args:
-            mask_type:
-            args:
-            kwargs:
-        """
-        super().__init__(*args, **kwargs)
-        assert mask_type in ["A", "B"]
-        self.register_buffer(
-            "mask", torch.ones(self.weight.data.shape), persistent=False
-        )
-
-        # so VIM syntax highlighting doesn't freak out
-        self.mask = self.mask
-
-        h = self.weight.data.shape[2]
-        w = self.weight.data.shape[3]
-        self.mask[:, :, h // 2, w // 2 + (mask_type == "B") :] = 0
-        self.mask[:, :, h // 2 + 1 :] = 0
-
-    def forward(self, x):
-        """forward.
-
-        Args:
-            x:
-        """
-        self.weight.data *= self.mask
-        return super().forward(x)
-
-
-class CondGatedMaskedConv2d(nn.Module):
-    """CondGatedMaskedConv2d.
-    """
-
-    def __init__(self, in_channels, out_channels, kernel_size, mask_type):
-        """__init__.
-
-        Args:
-            in_channels:
-            out_channels:
-            kernel_size:
-            mask_type:
-        """
-        super().__init__()
-        self.masked_conv_1 = MaskedConv2d(
-            mask_type=mask_type,
-            in_channels=in_channels,
-            out_channels=out_channels,
-            kernel_size=kernel_size,
-            padding=kernel_size // 2,
-        )
-        self.masked_conv_2 = MaskedConv2d(
-            mask_type=mask_type,
-            in_channels=in_channels,
-            out_channels=out_channels,
-            kernel_size=kernel_size,
-            padding=kernel_size // 2,
-        )
-        self.cond_conv_1 = nn.Conv2d(
-            in_channels=in_channels,
-            out_channels=out_channels,
-            kernel_size=kernel_size,
-            padding=kernel_size // 2,
-        )
-        self.cond_conv_2 = nn.Conv2d(
-            in_channels=in_channels,
-            out_channels=out_channels,
-            kernel_size=kernel_size,
-            padding=kernel_size // 2,
-        )
-
-    def forward(self, x, h):
-        """
-        x: input
-        h: conditional input (should have the same shape as input)
-        """
-        inp = torch.tanh(self.masked_conv_1(x) + self.cond_conv_1(h))
-        gate = torch.sigmoid(self.masked_conv_2(x) + self.cond_conv_2(h))
-        return inp * gate
-
-
-class GatedLinear(nn.Module):
-    """GatedLinear.
-    """
-
-    def __init__(self, *args, **kwargs):
-        """__init__.
-
-        Args:
-            args:
-            kwargs:
-        """
-        super().__init__()
-        self.value = nn.Linear(*args, **kwargs)
-        self.gate = nn.Linear(*args, **kwargs)
-
-    def forward(self, x):
-        """forward.
-
-        Args:
-            x:
-        """
-        return torch.sigmoid(self.gate(x)) * self.value(x)
