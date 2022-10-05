@@ -59,4 +59,6 @@ repos:
         language: node
         pass_filenames: false
         types: [python]
+        args:
+          - --ignoreexternal
         additional_dependencies: ["pyright"]
