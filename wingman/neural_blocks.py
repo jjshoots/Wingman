@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from typing import List
 from typing import Optional
 
 import torch.nn as nn
@@ -214,20 +215,20 @@ class Neural_blocks:
     @classmethod
     def generate_conv_stack(
         cls,
-        channels_description: list[int],
-        kernels_description: list[int],
-        pooling_description: list[int],
-        activation_description: list[str],
+        channels_description: List[int],
+        kernels_description: List[int],
+        pooling_description: List[int],
+        activation_description: List[str],
         padding: Optional[int] = None,
         norm="non",
     ) -> nn.Sequential:
         """generate_conv_stack.
 
         Args:
-            channels_description (list[int]): channels_description
-            kernels_description (list[int]): kernels_description
-            pooling_description (list[int]): pooling_description
-            activation_description (list[str]): activation_description
+            channels_description (List[int]): channels_description
+            kernels_description (List[int]): kernels_description
+            pooling_description (List[int]): pooling_description
+            activation_description (List[str]): activation_description
             padding (Optional[int]): padding
             norm:
 
@@ -261,21 +262,21 @@ class Neural_blocks:
     @classmethod
     def generate_deconv_stack(
         cls,
-        channels_description: list[int],
-        kernels_description: list[int],
-        padding_description: list[int],
-        stride_description: list[int],
-        activation_description: list[str],
+        channels_description: List[int],
+        kernels_description: List[int],
+        padding_description: List[int],
+        stride_description: List[int],
+        activation_description: List[str],
         norm: str = "non",
     ) -> nn.Sequential:
         """generate_deconv_stack.
 
         Args:
-            channels_description (list[int]): channels_description
-            kernels_description (list[int]): kernels_description
-            padding_description (list[int]): padding_description
-            stride_description (list[int]): stride_description
-            activation_description (list[str]): activation_description
+            channels_description (List[int]): channels_description
+            kernels_description (List[int]): kernels_description
+            padding_description (List[int]): padding_description
+            stride_description (List[int]): stride_description
+            activation_description (List[str]): activation_description
             norm (str): norm
 
         Returns:
@@ -309,16 +310,16 @@ class Neural_blocks:
     @classmethod
     def generate_linear_stack(
         cls,
-        features_description: list[int],
-        activation_description: list[str],
+        features_description: List[int],
+        activation_description: List[str],
         norm: str = "non",
         bias: bool = True,
     ) -> nn.Sequential:
         """generate_linear_stack.
 
         Args:
-            features_description (list[int]): features_description
-            activation_description (list[str]): activation_description
+            features_description (List[int]): features_description
+            activation_description (List[str]): activation_description
             norm (str): norm
             bias (bool): bias
 
