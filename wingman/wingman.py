@@ -159,9 +159,10 @@ class Wingman:
             settings = yaml.load(f, Loader=yaml.FullLoader)
 
             for set in settings:
-                # if the setting is None, auto assign a random int
-                if settings[set] is None:
-                    settings[set] = np.random.randint(999999)
+                # exclusively for version number only
+                if set == "version_number":
+                    if settings["version_number"] is None:
+                        settings["version_number"] = np.random.randint(999999)
 
                 parser.add_argument(
                     f"--{set}",
