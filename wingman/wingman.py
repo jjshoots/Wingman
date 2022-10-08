@@ -234,7 +234,7 @@ class Wingman:
 
     def checkpoint(
         self, loss: float, batch: int, epoch: int
-    ) -> tuple[bool, Optional[str], Optional[str]]:
+    ) -> tuple[bool, str, str]:
         """checkpoint.
 
         Depending on whether epoch_interval or batch_interval is used,
