@@ -156,7 +156,29 @@ class Wingman:
         parser = argparse.ArgumentParser(description=self.experiment_description)
 
         with open(self.config_yaml) as f:
+
+            # read in the file
             config = yaml.load(f, Loader=yaml.FullLoader)
+
+            # checks that we have the default params in the file
+            assertation_list = [
+                "weights_directory",
+                "version_number",
+                "mark_number",
+                "increment",
+                "epoch_interval",
+                "batch_interval",
+                "max_skips",
+                "greater_than",
+                "wandb",
+                "wandb_name",
+                "wandb_notes",
+                "wandb_id",
+                "wandb_entity",
+                "wandb_project",
+            ]
+            for item in assertation_list:
+                assert item in config, f"Missing parameter {item} in config file."
 
             for item in config:
                 # exclusively for version number only
@@ -310,11 +332,7 @@ class Wingman:
 
                 update = True
 
-        # return depending on whether we need to save
-        if update:
-            return update, self.model_file, self.optim_file
-        else:
-            return update, None, None
+        return update, self.model_file, self.optim_file
 
     def write_auxiliary(
         self, data: np.ndarray, variable_name: str, precision: str = "%1.3f"
@@ -393,6 +411,11 @@ class Wingman:
             print("No weights file found, generating new one during training.")
             have_file = False
 
+        # check if the optim file exists
+        if not os.path.isfile(self.optim_file):
+            print("Optim file not found, please be careful!")
+
+        # return depending on whether we've found the file
         if have_file:
             return have_file, self.model_file, self.optim_file
         else:
