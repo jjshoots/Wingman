@@ -3,7 +3,7 @@ import argparse
 import math
 import os
 import time
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
 import torch
@@ -234,7 +234,7 @@ class Wingman:
 
         return cfg
 
-    def checkpoint(self, loss: float, batch: int, epoch: int) -> tuple[bool, str, str]:
+    def checkpoint(self, loss: float, batch: int, epoch: int) -> Tuple[bool, str, str]:
         """checkpoint.
 
         Depending on whether epoch_interval or batch_interval is used,
@@ -251,7 +251,7 @@ class Wingman:
             epoch (int): epoch number
 
         Returns:
-            tuple[bool, Optional[str], Optional[str]]:
+            Tuple[bool, Optional[str], Optional[str]]:
         """
         # indicator on whether we need to save the weights
         update = False
@@ -355,7 +355,7 @@ class Wingman:
 
     def get_weight_files(
         self, latest: bool = True
-    ) -> tuple[bool, Optional[str], Optional[str]]:
+    ) -> Tuple[bool, Optional[str], Optional[str]]:
         """get_weight_files.
 
         Returns three things:
@@ -367,7 +367,7 @@ class Wingman:
             latest (bool): whether we want the latest file or the one determined by `mark_number`
 
         Returns:
-            tuple[bool, Optional[str], Optional[str]]:
+            Tuple[bool, Optional[str], Optional[str]]:
         """
         have_file = False
 
