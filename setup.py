@@ -1,8 +1,19 @@
 from setuptools import setup
 
+def get_version():
+    """Gets the pettingzoo version."""
+    path = "pyproject.toml"
+    with open(path) as file:
+        lines = file.readlines()
+
+    for line in lines:
+        if line.startswith("version"):
+            return line.strip().split()[-1].strip().strip('"')
+    raise RuntimeError("bad version data in __init__.py")
+
 setup(
     name="Wingman",
-    version="0.0.9",
+    version=get_version(),
     author="Jet",
     author_email="taijunjet@hotmail.com",
     description="Wingman for all your AI applications",
