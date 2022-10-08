@@ -162,6 +162,7 @@ class Wingman:
 
             # checks that we have the default params in the file
             assertation_list = [
+                "debug",
                 "weights_directory",
                 "version_number",
                 "mark_number",
@@ -330,7 +331,7 @@ class Wingman:
                     f"Passed {self.max_skips} intervals without saving so far, saving weights to: /weights_intermediary.pth"
                 )
 
-                update = True
+                return True, self.intermediary_file, self.optim_file
 
         return update, self.model_file, self.optim_file
 
@@ -389,7 +390,7 @@ class Wingman:
             )
 
         # once the file version doesn't exist, decrement by one and use that file
-        self.mark_number -= 1
+        self.mark_number -= 1 if self.mark_number > 0 else 0
         self.model_file = os.path.join(
             self.version_directory,
             f"weights{self.mark_number}.pth",
