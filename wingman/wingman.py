@@ -285,13 +285,15 @@ class Wingman:
                 self.skips = 0
 
                 # increment the mark number
-                self.mark_number += 1
+                if self.set.increment:
+                    self.mark_number += 1
 
-                # regenerate the weights_file path
-                self.model_file = os.path.join(
-                    self.version_directory,
-                    f"weights{self.mark_number}.pth",
-                )
+                    # regenerate the weights_file path
+                    self.model_file = os.path.join(
+                        self.version_directory,
+                        f"weights{self.mark_number}.pth",
+                    )
+
                 print(
                     f"New lowest point, saving weights to: {self.version_dir_print}/weights{self.mark_number}.pth"
                 )
