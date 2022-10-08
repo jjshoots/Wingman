@@ -58,7 +58,7 @@ class Wingman:
         # save our experiment description
         self.config_yaml = config_yaml
         self.experiment_description = experiment_description
-        cfg = self.__yaml_to_args()
+        self.cfg = self.__yaml_to_args()
 
         # make sure that either only epoch or batch interval is set
         assert (
@@ -207,7 +207,6 @@ class Wingman:
             # otherwise just merge settings with args
             cfg = argparse.Namespace(**config)
 
-        self.cfg = cfg
         return cfg
 
     def checkpoint(
