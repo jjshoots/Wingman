@@ -76,24 +76,24 @@ class Wingman:
         self.log = dict()
 
         # minimum required before new weight file is made
-        self.greater_than = cfg.greater_than
+        self.greater_than = self.cfg.greater_than
 
         # the interval before we save things
         self.interval = (
-            cfg.epoch_interval if cfg.epoch_interval > 0 else cfg.batch_interval
+            self.cfg.epoch_interval if self.cfg.epoch_interval > 0 else self.cfg.batch_interval
         )
 
         # maximum skips allowed before save to intermediary
-        self.max_skips = cfg.max_skips
+        self.max_skips = self.cfg.max_skips
 
         # weight file variables
         self.directory = os.path.dirname(__file__)
-        self.version_number = cfg.version_number
-        self.mark_number = cfg.mark_number
+        self.version_number = self.cfg.version_number
+        self.mark_number = self.cfg.mark_number
 
         # directory itself
         self.version_directory = os.path.join(
-            cfg.weights_directory, f"Version{self.version_number}"
+            self.cfg.weights_directory, f"Version{self.version_number}"
         )
         self.version_dir_print = self.version_directory.split("/")[-2]
 
