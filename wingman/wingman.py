@@ -243,7 +243,6 @@ class Wingman:
             # perform the wandb log here
             if self.cfg.wandb:
                 wandb.log(self.log)
-                self.log = dict()
         else:
             self.cumulative_loss += loss
             self.iter_passed += 1.0

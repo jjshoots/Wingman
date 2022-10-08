@@ -108,7 +108,7 @@ After defining your `config.yaml` file, the basic usage of Wingman is as follows
 
         # when wandb is enabled (via `wandb = true` in the yaml file)
         # logging can be done by passing Wingman a dictionary
-        # the dictionary is logged to wandb and then cleared everytime `.checkpoint()` is called
+        # the dictionary is logged to wandb everytime `.checkpoint()` is called
         wm.log = {"log": 5, "these": 2.34, "values": -5.432}
 
         # let Wingman handle checkpointing for you
