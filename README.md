@@ -96,8 +96,8 @@ After defining your `settings.yaml` file, the basic usage of Wingman is as follo
     if have_file:
         # Wingman simply returns a string of where the weight files are
         # no unnecessary wrapping!
-        model.load(model_file)
-        optim.load(optim_file)
+        model.load_state_dict(torch.load(model_file))
+        optim.load_state_dict(torch.load(optim_file))
 
     # let's run some training:
     while(training):
@@ -116,8 +116,8 @@ After defining your `settings.yaml` file, the basic usage of Wingman is as follo
         if update_weights:
             # if Wingman deems that the weights should be checkpointed, it returns
             # a string of where the weight files should go for it to be found later
-            model.save(model_file)
-            optim.save(optim_file)
+            torch.save(model.state_dict(), model_file)
+            torch.save(optim.state_dict(), optim_file)
 ```
 
 ### `from wingman import Neural_blocks`
