@@ -80,7 +80,9 @@ class Wingman:
 
         # the interval before we save things
         self.interval = (
-            self.cfg.epoch_interval if self.cfg.epoch_interval > 0 else self.cfg.batch_interval
+            self.cfg.epoch_interval
+            if self.cfg.epoch_interval > 0
+            else self.cfg.batch_interval
         )
 
         # maximum skips allowed before save to intermediary
@@ -232,9 +234,7 @@ class Wingman:
 
         return cfg
 
-    def checkpoint(
-        self, loss: float, batch: int, epoch: int
-    ) -> tuple[bool, str, str]:
+    def checkpoint(self, loss: float, batch: int, epoch: int) -> tuple[bool, str, str]:
         """checkpoint.
 
         Depending on whether epoch_interval or batch_interval is used,

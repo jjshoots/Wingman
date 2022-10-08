@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-from typing import List
-from typing import Optional
+from typing import List, Optional
 
 import torch.nn as nn
 

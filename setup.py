@@ -1,5 +1,6 @@
 from setuptools import setup
 
+
 def get_version():
     """Gets the pettingzoo version."""
     path = "pyproject.toml"
@@ -10,6 +11,7 @@ def get_version():
         if line.startswith("version"):
             return line.strip().split()[-1].strip().strip('"')
     raise RuntimeError("bad version data in __init__.py")
+
 
 setup(
     name="Wingman",
