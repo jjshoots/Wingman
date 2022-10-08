@@ -18,12 +18,12 @@ class Wingman:
     Minimal example:
 
     ```py
-    helper = Wingman(./settings.yaml)
-    set = helper.set
+    helper = Wingman(./config.yaml)
+    cfg = helper.cfg
 
     # load the model and optimizer
-    model = Model().to(set.device)
-    optim = optimizer.AdamW(model.parameters(), lr=set.learning_rate, amsgrad=True)
+    model = Model().to(cfg.device)
+    optim = optimizer.AdamW(model.parameters(), lr=cfg.learning_rate, amsgrad=True)
 
     # get the weight files if they exist
     have_file, weight_file, optim_file = self.get_weight_files()
@@ -46,23 +46,23 @@ class Wingman:
 
     def __init__(
         self,
-        settings_yaml: str,
+        config_yaml: str,
         experiment_description: str = "",
     ):
         """__init__.
 
         Args:
-            settings_yaml (str): location of where the settings yaml is described
+            config_yaml (str): location of where the config yaml is described
             experiment_description (str): optional description of the experiment
         """
         # save our experiment description
-        self.settings_yaml = settings_yaml
+        self.config_yaml = config_yaml
         self.experiment_description = experiment_description
-        set = self.__yaml_to_args()
+        cfg = self.__yaml_to_args()
 
         # make sure that either only epoch or batch interval is set
         assert (
-            self.set.epoch_interval * self.set.batch_interval < 0
+            self.cfg.epoch_interval * self.cfg.batch_interval < 0
         ), "epoch_interval or batch_interval must be positive number"
 
         # runtime variables
@@ -76,24 +76,24 @@ class Wingman:
         self.log = dict()
 
         # minimum required before new weight file is made
-        self.greater_than = set.greater_than
+        self.greater_than = cfg.greater_than
 
         # the interval before we save things
         self.interval = (
-            set.epoch_interval if set.epoch_interval > 0 else set.batch_interval
+            cfg.epoch_interval if cfg.epoch_interval > 0 else cfg.batch_interval
         )
 
         # maximum skips allowed before save to intermediary
-        self.max_skips = set.max_skips
+        self.max_skips = cfg.max_skips
 
         # weight file variables
         self.directory = os.path.dirname(__file__)
-        self.version_number = set.version_number
-        self.mark_number = set.mark_number
+        self.version_number = cfg.version_number
+        self.mark_number = cfg.mark_number
 
         # directory itself
         self.version_directory = os.path.join(
-            set.weights_directory, f"Version{self.version_number}"
+            cfg.weights_directory, f"Version{self.version_number}"
         )
         self.version_dir_print = self.version_directory.split("/")[-2]
 
@@ -155,60 +155,60 @@ class Wingman:
         # parse the arguments
         parser = argparse.ArgumentParser(description=self.experiment_description)
 
-        with open(self.settings_yaml) as f:
-            settings = yaml.load(f, Loader=yaml.FullLoader)
+        with open(self.config_yaml) as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
 
-            for set in settings:
+            for item in config:
                 # exclusively for version number only
-                if set == "version_number":
-                    if settings["version_number"] is None:
-                        settings["version_number"] = np.random.randint(999999)
+                if item == "version_number":
+                    if config[item] is None:
+                        config[item] = np.random.randint(999999)
 
                 parser.add_argument(
-                    f"--{set}",
-                    type=type(settings[set]),
+                    f"--{item}",
+                    type=type(config[item]),
                     nargs="?",
                     const=True,
-                    default=settings[set],
+                    default=config[item],
                     help="None",
                 )
 
         # dict of all arguments, by default will be overridden by commandline args
-        settings = {**vars(parser.parse_args())}
+        config = {**vars(parser.parse_args())}
 
         # add the gpu
-        settings["device"] = self.__get_device()
+        config["device"] = self.__get_device()
 
         # change the version if debugging
-        settings["version_number"] = (
-            "Debug" if settings["debug"] else str(settings["version_number"])
+        config["version_number"] = (
+            "Debug" if config["debug"] else str(config["version_number"])
         )
 
-        # set depending on whether wandb is enabled
-        set = None
-        if settings["wandb"]:
+        # cfg depending on whether wandb is enabled
+        cfg = None
+        if config["wandb"]:
             wandb.init(
-                project=settings["wandb_project"],
-                entity=settings["wandb_entity"],
-                config=settings,
-                name=settings["wandb_name"] + ", v=" + settings["version_number"]
-                if settings["wandb_name"] != ""
-                else settings["version_number"],
-                notes=settings["wandb_notes"],
-                id=settings["wandb_id"] if settings["wandb_id"] != "" else None,
+                project=config["wandb_project"],
+                entity=config["wandb_entity"],
+                config=config,
+                name=config["wandb_name"] + ", v=" + config["version_number"]
+                if config["wandb_name"] != ""
+                else config["version_number"],
+                notes=config["wandb_notes"],
+                id=config["wandb_id"] if config["wandb_id"] != "" else None,
             )
 
             # also save the code if wandb
             wandb.run.log_code(".", exclude_fn=lambda path: "venv" in path)  # type: ignore
 
             # set to be consistent with wandb config
-            set = wandb.config
+            cfg = wandb.config
         else:
             # otherwise just merge settings with args
-            set = argparse.Namespace(**settings)
+            cfg = argparse.Namespace(**config)
 
-        self.set = set
-        return set
+        self.cfg = cfg
+        return cfg
 
     def checkpoint(
         self, loss: float, batch: int, epoch: int
@@ -234,7 +234,7 @@ class Wingman:
         # indicator on whether we need to save the weights
         update = False
 
-        step = epoch if self.set.epoch_interval > 0 else batch
+        step = epoch if self.cfg.epoch_interval > 0 else batch
 
         # this is triggered when n intervals have passed
         if step % self.interval == 0:
@@ -242,7 +242,7 @@ class Wingman:
             self.iter_passed = 1.0
 
             # perform the wandb log here
-            if self.set.wandb:
+            if self.cfg.wandb:
                 wandb.log(self.log)
                 self.log = dict()
         else:
@@ -285,7 +285,7 @@ class Wingman:
                 self.skips = 0
 
                 # increment the mark number
-                if self.set.increment:
+                if self.cfg.increment:
                     self.mark_number += 1
 
                     # regenerate the weights_file path

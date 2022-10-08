@@ -27,7 +27,7 @@ Wingman has several core modules and static functions, all of which can be used 
 
 ### `from wingman import Wingman`
 
-This is the core module for Wingman, Wingman requires a bare minimum `settings.yaml` file somewhere accessible in your project directory.
+This is the core module for Wingman, Wingman requires a bare minimum `config.yaml` file somewhere accessible in your project directory.
 A bare minimum yaml file is as follows:
 
 ```yaml
@@ -68,25 +68,25 @@ The parameters described are as follows:
 - `wandb_entity`: Your username/organization name for WandB.
 - `wandb_project`: The project that this run will be under.
 
-If you need more parameters, adding them to the `settings.yaml` file can be done freely, and these parameters can be easily referenced in the code later.
+If you need more parameters, adding them to the `config.yaml` file can be done freely, and these parameters can be easily referenced in the code later.
 In addition, Wingman also automatically generates a `device` parameter, this parameter is automatically set to the GPU if your system has one, and can be used later for easy transfer of tensors.
 
-You can also use the `settings.yaml` file to define a set of sane defaults, and then override them using commandline arguments later.
-This is because Wingman automatically converts all parameters in the `settings.yaml` file into commandline arguments using the `argparse` python module.
+You can also use the `config.yaml` file to define a set of sane defaults, and then override them using commandline arguments later.
+This is because Wingman automatically converts all parameters in the `config.yaml` file into commandline arguments using the `argparse` python module.
 This allows your `main.py` file to be much cleaner, without requiring the 50 odd lines of code at the top only for parameter definition.
 
-After defining your `settings.yaml` file, the basic usage of Wingman is as follows:
+After defining your `config.yaml` file, the basic usage of Wingman is as follows:
 
 ```python
     from wingman import Wingman
 
-    # initialize Wingman and get all the parameters from the `settings.yaml` file
-    wm = Wingman("./settings.yaml")
-    set = wm.set
+    # initialize Wingman and get all the parameters from the `config.yaml` file
+    wm = Wingman("./config.yaml")
+    cfg = wm.cfg
 
-    # load the model and optimizer, `set.device` is automatically generated
-    model = Model(set.YOUR_PARAM, set.YOUR_OTHER_PARAM).to(set.device)
-    optim = optimizer.AdamW(model.parameters(), lr=set.YOUR_LEARNING_RATE_PARAM, amsgrad=True)
+    # load the model and optimizer, `cfg.device` is automatically generated
+    model = Model(cfg.YOUR_PARAM, cfg.YOUR_OTHER_PARAM).to(cfg.device)
+    optim = optimizer.AdamW(model.parameters(), lr=cfg.YOUR_LEARNING_RATE_PARAM, amsgrad=True)
 
     # we can check if we have trained this model before, and if we have, just load it
     # this checking is done using the `version_number` param, if `latest=True` is set,
@@ -302,7 +302,7 @@ tensor([[0.2839, 0.5094, 0.5543, 0.4561, 0.8252],
  [0.78330221 0.84888837 0.68529167 0.61878902 0.13556213]]
 ```
 
-If used in conjunction with Wingman, it's possible to simply do `gpuize(foo, set.device)` when `set` is defined as done earlier.
+If used in conjunction with Wingman, it's possible to simply do `gpuize(foo, cfg.device)` when `cfg` is defined as done earlier.
 
 ****
 ****
