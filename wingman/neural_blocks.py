@@ -4,8 +4,8 @@ from typing import List, Optional
 import torch.nn as nn
 
 
-class Neural_blocks:
-    """Neural_blocks."""
+class NeuralBlocks:
+    """NeuralBlocks."""
 
     def __init__(self):
         """__init__."""

@@ -120,19 +120,19 @@ After defining your `config.yaml` file, the basic usage of Wingman is as follows
             torch.save(optim.state_dict(), optim_file)
 ```
 
-### `from wingman import Neural_blocks`
+### `from wingman import NeuralBlocks`
 
 Neural blocks is a module for quickly prototyping neural network architectures.
 It offers several easier methods of defining standardized modules:
 
 #### Simple 3-layer MLP with ReLU activation
 ```python
->>> from wingman import Neural_blocks
+>>> from wingman import NeuralBlocks
 >>> features = [4, 16, 64, 3]
 >>> activation = ["relu", "tanh", "identity"]
 >>> norm = "batch"
 >>> bias = True
->>> MLP = Neural_blocks.generate_linear_stack(features, activation, norm, bias)
+>>> MLP = NeuralBlocks.generate_linear_stack(features, activation, norm, bias)
 >>> print(MLP)
 
 Sequential(
@@ -156,14 +156,14 @@ Sequential(
 
 #### 4 layer convolutional network with same padding and MaxPool2d across the last two layers
 ```python
->>> from wingman import Neural_blocks
+>>> from wingman import NeuralBlocks
 >>> channels = [3, 16, 32, 64, 1]
 >>> kernels = [3, 1, 3, 1]
 >>> pooling = [0, 0, 2, 2]
 >>> activation = ["relu", "relu", "tanh", "tanh"]
 >>> padding = None # this is equivalent to same padding
 >>> norm = "batch"
->>> CNN = Neural_blocks.generate_conv_stack(channels, kernels, pooling, activation, padding, norm)
+>>> CNN = NeuralBlocks.generate_conv_stack(channels, kernels, pooling, activation, padding, norm)
 >>> print(CNN)
 
 Sequential(
@@ -194,14 +194,14 @@ Sequential(
 
 #### 2 layer transposed convolutional network
 ```python
->>> from wingman import Neural_blocks
+>>> from wingman import NeuralBlocks
 >>> channels = [64, 32, 3]
 >>> kernels = [4, 4]
 >>> padding = [1, 1]
 >>> stride = [2, 2]
 >>> activation = ["lrelu", "lrelu"]
 >>> norm = "non"
->>> TCNN = Neural_blocks.generate_deconv_stack(channels, kernels, padding, stride, activation, norm)
+>>> TCNN = NeuralBlocks.generate_deconv_stack(channels, kernels, padding, stride, activation, norm)
 >>> print(TCNN)
 
 Sequential(

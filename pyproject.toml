@@ -6,13 +6,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jj_wingman"
-version = "0.0.16"
+version = "0.0.17"
 authors = [
   { name="Jet", email="taijunjet@hotmail.com" },
 ]
 description = "Wingman library for AI projects."
-long_description="./README.md"
-long_description_content_type="text/markdown"
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
