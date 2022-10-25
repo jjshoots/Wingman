@@ -235,7 +235,7 @@ class Wingman:
             step (int): step number
 
         Returns:
-            Tuple[bool, Optional[str], Optional[str]]:
+            Tuple[bool, str, str]:
         """
         # indicator on whether we need to save the weights
         update = False
