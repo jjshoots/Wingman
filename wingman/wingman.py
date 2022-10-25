@@ -267,6 +267,10 @@ class Wingman:
                 f"Step {step}; Average Loss {avg_loss:.5f}; Lowest Average Loss {self.lowest_loss:.5f}"
             )
 
+            # log to wandb if needed
+            if self.cfg.wandb:
+                wandb.log(self.log)
+
             # perform a save if we have found a new lowest loss
             if avg_loss < self.lowest_loss:
                 # redefine the new lowest loss
