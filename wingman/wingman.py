@@ -37,7 +37,7 @@ class Wingman:
         # training code here
         ...
 
-        update_weights, model_file, optim_file = self.checkpoint(loss, batch_number, epoch_number)
+        update_weights, model_file, optim_file = self.checkpoint(loss, step_number)
         if update_weights:
             model.save(model_file)
             optim.save(optim_file)
@@ -60,17 +60,22 @@ class Wingman:
         self.experiment_description = experiment_description
         self.cfg = self.__yaml_to_args()
 
-        # make sure that either only epoch or batch interval is set
+        # make sure that logging_interval is positive
         assert (
-            self.cfg.epoch_interval * self.cfg.batch_interval < 0
-        ), "epoch_interval or batch_interval must be positive number"
+            self.cfg.logging_interval > 0
+        ), "logging_interval must be a positive number"
+
+        # the interval before we save things
+        self.logging_interval = self.cfg.logging_interval
+
+        # maximum skips allowed before save to intermediary
+        self.max_skips = self.cfg.max_skips
 
         # runtime variables
-        self.iter_passed = 0
+        self.num_losses = 0
         self.cumulative_loss = 0
         self.lowest_loss = math.inf
-        self.previous_save_step = 0
-        self.previous_log_step = 0
+        self.next_log_step = self.logging_interval
         self.skips = 0
 
         # the logger
@@ -78,16 +83,6 @@ class Wingman:
 
         # minimum required before new weight file is made
         self.greater_than = self.cfg.greater_than
-
-        # the interval before we save things
-        self.interval = (
-            self.cfg.epoch_interval
-            if self.cfg.epoch_interval > 0
-            else self.cfg.batch_interval
-        )
-
-        # maximum skips allowed before save to intermediary
-        self.max_skips = self.cfg.max_skips
 
         # weight file variables
         self.directory = os.path.dirname(__file__)
@@ -125,20 +120,10 @@ class Wingman:
         print(f"Saving weights to {self.version_directory}...")
 
         # record that we're in a new training session
-        if not os.path.isfile(
-            # new training session when there's no training log
-            os.path.join(self.version_directory, "training_log.txt")
-        ):
+        if not os.path.isdir(self.version_directory):
             print("Weights directory not found, generating new one in 3 seconds...")
             time.sleep(3)
             os.makedirs(self.version_directory)
-
-        with open(
-            os.path.join(self.version_directory, "training_log.txt"),
-            "a",
-        ) as f:
-            f.write(f"New Session, Net Version {self.version_number} \n")
-            f.write("Epoch, Batch, Running Loss, Lowest Running Loss, Mark Number \n")
 
     def __get_device(self):
         """__get_device."""
@@ -170,8 +155,7 @@ class Wingman:
                 "version_number",
                 "mark_number",
                 "increment",
-                "epoch_interval",
-                "batch_interval",
+                "logging_interval",
                 "max_skips",
                 "greater_than",
                 "wandb",
@@ -235,11 +219,10 @@ class Wingman:
 
         return cfg
 
-    def checkpoint(self, loss: float, batch: int, epoch: int) -> Tuple[bool, str, str]:
+    def checkpoint(self, loss: float, step: int) -> Tuple[bool, str, str]:
         """checkpoint.
 
-        Depending on whether epoch_interval or batch_interval is used,
-        records training every epoch/batch steps.
+        Records training every logging_interval steps.
 
         Returns three things:
         - indicator on whether we should save weights
@@ -248,8 +231,7 @@ class Wingman:
 
         Args:
             loss (float): learning loss of the model as a detached float
-            batch (int): batch number
-            epoch (int): epoch number
+            step (int): step number
 
         Returns:
             Tuple[bool, Optional[str], Optional[str]]:
@@ -257,53 +239,30 @@ class Wingman:
         # indicator on whether we need to save the weights
         update = False
 
-        step = epoch if self.cfg.epoch_interval > 0 else batch
+        # accumulate the loss
+        self.cumulative_loss += loss
+        self.num_losses += 1.0
 
-        # this is triggered when n intervals have passed
-        if step % self.interval == 0:
-            self.cumulative_loss = loss
-            self.iter_passed = 1.0
-        else:
-            self.cumulative_loss += loss
-            self.iter_passed += 1.0
+        # check if n steps have passed and it is not the first step, we save here
+        if step >= self.next_log_step:
+            # compute the next time we need to log
+            self.next_log_step = (
+                int(step / self.logging_interval) + 1
+            ) * self.logging_interval
 
-        # determine whether to log to wandb
-        if step % self.interval and step != self.previous_log_step:
-            if self.cfg.wandb:
-                wandb.log(self.log)
-
-            self.previouis_log_step = step
-
-        # check if n intervals have passed and it is not the first interval, we save here
-        if step % self.interval == 0 and step != 0 and step != self.previous_save_step:
-            self.previous_save_step = step
-
-            # we use the loss per step as an indicator
-            avg_loss = self.cumulative_loss / self.iter_passed
+            # record the losses and reset the cumulative
+            avg_loss = self.cumulative_loss / self.num_losses
+            self.cumulative_loss = 0.0
+            self.num_losses = 0.0
 
             # always print on n intervals
             print(
-                f"Epoch {epoch}; Batch Number {batch}; Running Loss {avg_loss:.5f}; Lowest Running Loss {self.lowest_loss:.5f}"
+                f"Step {step}; Average Loss {avg_loss:.5f}; Lowest Average Loss {self.lowest_loss:.5f}"
             )
 
-            # record training log
-            with open(
-                os.path.join(
-                    self.version_directory,
-                    "training_log.txt",
-                ),
-                "a",
-            ) as f:
-                f.write(
-                    f"{epoch}, {batch}, {self.cumulative_loss}, {self.lowest_loss}, {self.mark_number} \n"
-                )
-
-            # record the lowest running loss in the status file
-            np.save(self.status_file, self.lowest_loss)
-
-            # save the network if the running loss is lower than the one we have
+            # perform a save if we have found a new lowest loss
             if avg_loss < self.lowest_loss:
-                # redefine the new running loss
+                # redefine the new lowest loss
                 self.lowest_loss = avg_loss
 
                 # reset the number of skips
@@ -323,19 +282,21 @@ class Wingman:
                     f"New lowest point, saving weights to: {self.version_dir_print}/weights{self.mark_number}.pth"
                 )
 
+                # record the lowest running loss in the status file
+                np.save(self.status_file, self.lowest_loss)
+
                 update = True
             else:
-                # if we don't get a new running loss, record that we skipped one interval
-                self.skips += 1
+                # save the network to intermediary if we crossed the max number of skips
+                if self.skips >= self.max_skips:
+                    self.skips = 0
+                    print(
+                        f"Passed {self.max_skips} intervals without saving so far, saving weights to: /weights_intermediary.pth"
+                    )
 
-            # save the network to intermediary if we crossed the max number of skips
-            if self.skips >= self.max_skips:
-                self.skips = 0
-                print(
-                    f"Passed {self.max_skips} intervals without saving so far, saving weights to: /weights_intermediary.pth"
-                )
-
-                return True, self.intermediary_file, self.optim_file
+                    return True, self.intermediary_file, self.optim_file
+                else:
+                    self.skips += 1
 
         return update, self.model_file, self.optim_file
 
