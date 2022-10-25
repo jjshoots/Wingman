@@ -76,6 +76,7 @@ class Wingman:
         self.cumulative_loss = 0
         self.lowest_loss = math.inf
         self.next_log_step = self.logging_interval
+        self.previous_checkpoint_step = 0
         self.skips = 0
 
         # the logger
@@ -238,6 +239,12 @@ class Wingman:
         """
         # indicator on whether we need to save the weights
         update = False
+
+        # check that our step didn't go in reverse
+        assert (
+            step >= self.previous_checkpoint_step
+        ), f"We can't step backwards! Got step {step} but the previous logging step was {self.previous_checkpoint_step}."
+        self.previous_checkpoint_step = step
 
         # accumulate the loss
         self.cumulative_loss += loss

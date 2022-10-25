@@ -39,8 +39,7 @@ version_number: null
 mark_number: 0
 
 increment: true
-epoch_interval: -1
-batch_interval: 10
+logging_interval: 10
 max_skips: 5
 greater_than: 0.0
 
@@ -58,8 +57,8 @@ The parameters described are as follows:
 - `version_number`: Wingman versions models different models using this number, if this is left as null, Wingman automatically chooses a number.
 - `mark_number`: Wingman versions different model checkpoints using this number.
 - `increment`: Whether to increment mark number, if this is set to false, Wingman won't save multiple variations of the same model.
-- `epoch_interval` and `batch_interval`: Training for deep learning models is generally done using epochs and batches. You can ask wingman to record training every n batches or every n epochs. Note that only one of these can be set, and the other must be -1.
-- `max_skips`: How many epochs/batches (specified using the previous arguments) before Wingman will save an intermediary checkpoint of the model.
+- `logging_interval`: During checkpointing, you can pass the training step to wingman, and after `logging_interval` steps has passed, Wingman will record the training. If Wingman has found a new lowest point, the model weights will be saved to a new file.
+- `max_skips`: How many logging steps skipped without finding a new lowest point (specified using the previous arguments) before Wingman will save an intermediary checkpoint of the model.
 - `greater_than`: You can tell Wingman to only checkpoint model when the previous checkpointed loss is more than the current loss by this value.
 - `wandb`: Whether to log things to WandB.
 - `wandb_name`: The name of the run to be displayed in WandB. If left blank, Wingman automatically assigns one depending on the model version number. If left blank, one is automatically assigned.
@@ -112,7 +111,7 @@ After defining your `config.yaml` file, the basic usage of Wingman is as follows
         wm.log = {"log": 5, "these": 2.34, "values": -5.432}
 
         # let Wingman handle checkpointing for you
-        update_weights, model_file, optim_file = wm.checkpoint(loss, batch_number, epoch_number)
+        update_weights, model_file, optim_file = wm.checkpoint(loss, training_step)
         if update_weights:
             # if Wingman deems that the weights should be checkpointed, it returns
             # a string of where the weight files should go for it to be found later
