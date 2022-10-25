@@ -70,6 +70,7 @@ class Wingman:
         self.cumulative_loss = 0
         self.lowest_loss = math.inf
         self.previous_save_step = 0
+        self.previous_log_step = 0
         self.skips = 0
 
         # the logger
@@ -262,13 +263,16 @@ class Wingman:
         if step % self.interval == 0:
             self.cumulative_loss = loss
             self.iter_passed = 1.0
-
-            # perform the wandb log here
-            if self.cfg.wandb:
-                wandb.log(self.log)
         else:
             self.cumulative_loss += loss
             self.iter_passed += 1.0
+
+        # determine whether to log to wandb
+        if step % self.interval and step != self.previous_log_step:
+            if self.cfg.wandb:
+                wandb.log(self.log)
+
+            self.previouis_log_step = step
 
         # check if n intervals have passed and it is not the first interval, we save here
         if step % self.interval == 0 and step != 0 and step != self.previous_save_step:
