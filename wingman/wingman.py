@@ -210,7 +210,10 @@ class Wingman:
             )
 
             # also save the code if wandb
-            wandb.run.log_code(".", exclude_fn=lambda path: "venv" in path)  # type: ignore
+            # wandb.run.log_code(".", exclude_fn=lambda path: "venv" in path)  # type: ignore
+            wandb.save('./*.py', policy="now")
+            wandb.save('./*.yaml', policy="now")
+            wandb.save('./*.yml', policy="now")
 
             # set to be consistent with wandb config
             cfg = wandb.config
