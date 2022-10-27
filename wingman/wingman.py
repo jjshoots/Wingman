@@ -269,7 +269,7 @@ class Wingman:
 
             # log to wandb if needed
             if self.cfg.wandb:
-                wandb.log(self.log)
+                self.wandb_log()
 
             # perform a save if we have found a new lowest loss
             if avg_loss < self.lowest_loss:
@@ -310,6 +310,21 @@ class Wingman:
                     self.skips += 1
 
         return update, self.model_file, self.optim_file
+
+    def wandb_log(self) -> None:
+        """wandb_log.
+
+        Logs the internal log to WandB.
+        Start logging by adding things to it using:
+        ```
+        wm.log["foo"] = "bar"
+        ```
+
+        Returns:
+            None:
+        """
+        assert isinstance(self.log, dict), f"log must be dictionary, currently it is {self.log}."
+        wandb.log(self.log)
 
     def write_auxiliary(
         self, data: np.ndarray, variable_name: str, precision: str = "%1.3f"

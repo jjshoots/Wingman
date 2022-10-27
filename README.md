@@ -54,14 +54,14 @@ wandb_project: 'my_new_project'
 The parameters described are as follows:
 - `debug`: Whether to set the model to debug mode
 - `weights_directory`: Where should Wingman point to for model weight saving
-- `version_number`: Wingman versions models different models using this number, if this is left as null, Wingman automatically chooses a number.
-- `mark_number`: Wingman versions different model checkpoints using this number.
+- `version_number`: Wingman versions different models using this number, if this is left as null, Wingman automatically chooses a number.
+- `mark_number`: Wingman checkpoints models using this number if left at 0, automatic checkpoint numbering occurs if the `increment` parameter is set to true.
 - `increment`: Whether to increment mark number, if this is set to false, Wingman won't save multiple variations of the same model.
-- `logging_interval`: During checkpointing, you can pass the training step to wingman, and after `logging_interval` steps has passed, Wingman will record the training. If Wingman has found a new lowest point, the model weights will be saved to a new file.
-- `max_skips`: How many logging steps skipped without finding a new lowest point (specified using the previous arguments) before Wingman will save an intermediary checkpoint of the model.
-- `greater_than`: You can tell Wingman to only checkpoint model when the previous checkpointed loss is more than the current loss by this value.
+- `logging_interval`: During training, pass the training step to wingman, and after `logging_interval` steps has passed, Wingman will record the training. If Wingman has found a new lowest point, the model weights will be saved to a new file.
+- `max_skips`: How many logging steps skipped without finding a new lowest point (specified using the `logging_interval` argument) before Wingman will save an intermediary checkpoint of the model.
+- `greater_than`: You can tell Wingman to only checkpoint the model when the previous checkpointed loss is more than the current loss by this value.
 - `wandb`: Whether to log things to WandB.
-- `wandb_name`: The name of the run to be displayed in WandB. If left blank, Wingman automatically assigns one depending on the model version number. If left blank, one is automatically assigned.
+- `wandb_name`: The name of the run to be displayed in WandB. If left blank, Wingman automatically assigns one depending on the model version number.
 - `wandb_notes`: Some helpful notes that you can leave for your runs that will be recorded in WandB.
 - `wandb_id`: A Unique ID for this run. If left blank, one is automatically assigned.
 - `wandb_entity`: Your username/organization name for WandB.
@@ -107,7 +107,7 @@ After defining your `config.yaml` file, the basic usage of Wingman is as follows
 
         # when wandb is enabled (via `wandb = true` in the yaml file)
         # logging can be done by passing Wingman a dictionary
-        # the dictionary is logged to wandb everytime `.checkpoint()` is called
+        # the dictionary is logged to wandb every logging interval
         wm.log = {"log": 5, "these": 2.34, "values": -5.432}
 
         # let Wingman handle checkpointing for you
