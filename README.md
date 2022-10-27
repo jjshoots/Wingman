@@ -111,6 +111,9 @@ After defining your `config.yaml` file, the basic usage of Wingman is as follows
         # the dictionary is logged to wandb every logging interval
         wm.log = {"log": 5, "these": 2.34, "values": -5.432}
 
+        # ... or you can force wandb logging using
+        wm.wandb_log()
+
         # let Wingman handle checkpointing for you
         update_weights, model_file, optim_file = wm.checkpoint(loss, training_step)
         if update_weights:
