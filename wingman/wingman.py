@@ -323,7 +323,9 @@ class Wingman:
         Returns:
             None:
         """
-        assert isinstance(self.log, dict), f"log must be dictionary, currently it is {self.log}."
+        assert isinstance(
+            self.log, dict
+        ), f"log must be dictionary, currently it is {self.log}."
         wandb.log(self.log)
 
     def write_auxiliary(
