@@ -73,6 +73,7 @@ In addition, Wingman also automatically generates a `device` parameter, this par
 You can also use the `config.yaml` file to define a set of sane defaults, and then override them using commandline arguments later.
 This is because Wingman automatically converts all parameters in the `config.yaml` file into commandline arguments using the `argparse` python module.
 This allows your `main.py` file to be much cleaner, without requiring the 50 odd lines of code at the top only for parameter definition.
+For instance, if you have `hack_level=10.3` in the `config.yaml`, you can override its value via the commandline argument by doing `python3 your_program.py --hack_label=69.420`.
 
 After defining your `config.yaml` file, the basic usage of Wingman is as follows:
 
