@@ -281,13 +281,12 @@ class Wingman:
 
                 # increment the mark number
                 if self.cfg.increment:
-                    self.mark_number += 1
-
                     # regenerate the weights_file path
                     self.model_file = os.path.join(
                         self.version_directory,
                         f"weights{self.mark_number}.pth",
                     )
+                    self.mark_number += 1
 
                 print(
                     f"New lowest point, saving weights to: {self.version_dir_print}/weights{self.mark_number}.pth"
