@@ -63,7 +63,7 @@ class Wingman:
         # make sure that logging_interval is positive
         assert (
             self.cfg.logging_interval > 0
-        ), "logging_interval must be a positive number"
+        ), f"logging_interval must be a positive number, got {self.cfg.logging_interval}."
 
         # the interval before we save things
         self.logging_interval = self.cfg.logging_interval
@@ -114,9 +114,8 @@ class Wingman:
             "weights_intermediary.pth",
         )
 
-        print(
-            "\n----------------------------------------------------------------------\n"
-        )
+        print("██████      ██████")
+        print("    ████  ████")
         print(f"Using Device {self.device}")
         print(f"Saving weights to {self.version_directory}...")
 
