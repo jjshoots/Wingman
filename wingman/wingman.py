@@ -114,8 +114,7 @@ class Wingman:
             "weights_intermediary.pth",
         )
 
-        print("██████      ██████")
-        print("    ████  ████")
+        print("--------------𓆩𓆪--------------")
         print(f"Using Device {self.device}")
         print(f"Saving weights to {self.version_directory}...")
 
