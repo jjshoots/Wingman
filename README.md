@@ -282,6 +282,9 @@ for batch_num, stuff in enumerate(dataloader):
     dones = gpuize(stuff[4], "cuda:0")
 ```
 
+
+<br>
+
 ### `from wingman import gpuize, cpuize`
 
 These are quality of life standalone functions.
