@@ -1,0 +1,18 @@
+# wingman required params
+debug: false
+
+weights_directory: 'weights'
+version_number: null
+mark_number: 0
+
+increment: true
+logging_interval: 10
+max_skips: 5
+greater_than: 0.0
+
+wandb: false
+wandb_name: ''
+wandb_notes: ''
+wandb_id: ''
+wandb_entity: 'wingman'
+wandb_project: 'my_new_project'

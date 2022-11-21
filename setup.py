@@ -24,7 +24,7 @@ setup(
     long_description="Wingman library for AI projects.",
     long_description_content_type="text/markdown",
     keywords=["Machine Learning"],
-    python_requires=">=3.7, <3.11",
+    python_requires=">=3.7",
     packages=["wingman"],
     include_package_data=True,
     install_requires=["numpy", "torch", "wandb", "pyyaml"],
