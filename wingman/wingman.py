@@ -111,7 +111,7 @@ class Wingman:
         )
         self.intermediary_file = os.path.join(
             self.version_directory,
-            "weights_intermediary.pth",
+            "weights-1.pth",
         )
 
         print("--------------𓆩𓆪--------------")
@@ -299,7 +299,7 @@ class Wingman:
                 if self.skips >= self.max_skips:
                     self.skips = 0
                     print(
-                        f"Passed {self.max_skips} intervals without saving so far, saving weights to: /weights_intermediary.pth"
+                        f"Passed {self.max_skips} intervals without saving so far, saving weights to: /weights-1.pth"
                     )
 
                     return True, self.intermediary_file, self.optim_file

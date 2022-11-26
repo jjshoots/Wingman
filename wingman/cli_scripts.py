@@ -1,7 +1,7 @@
-import sys
 import glob
 import os
 import shutil
+import sys
 
 
 def _get_dir_size(path):
@@ -21,7 +21,6 @@ def compress_weights():
     Example CLI usage:
     `wingman-compress-weights [optional weights directory]`
     """
-
     print("---------------------------------------------")
     print("Beginning compression...")
     print("---------------------------------------------")
@@ -66,7 +65,7 @@ def compress_weights():
                 weights.remove(latest)
 
         # remove the intermediary from our list if it's there
-        intermediary = os.path.join(dir, f"weights_intermediary.pth")
+        intermediary = os.path.join(dir, "weights-1.pth")
         if intermediary in weights:
             weights.remove(intermediary)
 

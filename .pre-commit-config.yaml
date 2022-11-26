@@ -12,8 +12,8 @@ repos:
           - --ignore-words-list=magent
           - --skip=*.css,*.js,*.map,*.scss,*svg
           - --exclude-file=./README.md
-  - repo: https://gitlab.com/PyCQA/flake8
-    rev: 5.0.4
+  - repo: https://github.com/PyCQA/flake8
+    rev: 4.0.1
     hooks:
       - id: flake8
         args:
