@@ -93,9 +93,9 @@ def compress_weights():
 
     # printout
     print("---------------------------------------------")
-    print(f"Original disk usage: {original_size} bytes")
-    print(f"Removed {original_size - final_size} bytes")
-    print(f"Final disk usage: {final_size} bytes")
+    print(f"Original disk usage: {original_size / 1e9} gigabytes")
+    print(f"Removed {(original_size - final_size) / 1e9} gigabytes")
+    print(f"Final disk usage: {final_size / 1e9} gigabytes")
     print("---------------------------------------------")
 
 
