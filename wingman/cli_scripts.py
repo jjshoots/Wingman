@@ -88,7 +88,7 @@ def compress_weights():
         shutil.rmtree(dir, ignore_errors=False, onerror=None)
         print(f"Deleted {dir}.")
 
-    # get the original filesize
+    # get the final filesize
     final_size = _get_dir_size(target_dir)
 
     # printout
