@@ -361,9 +361,7 @@ class Wingman:
         with open(filename, "ab") as f:
             np.savetxt(f, [data], delimiter=",", fmt=precision)
 
-    def get_weight_files(
-        self, latest: bool = True
-    ) -> Tuple[bool, str, str]:
+    def get_weight_files(self, latest: bool = True) -> Tuple[bool, str, str]:
         """get_weight_files.
 
         Returns three things:
