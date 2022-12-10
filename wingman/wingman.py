@@ -108,7 +108,7 @@ class Wingman:
         )
 
         print("--------------𓆩𓆪--------------")
-        print(f"Using Device {cstr(self.device, 'HEADER')}")
+        print(f"Using device {cstr(self.device, 'HEADER')}")
         print(f"Saving weights to {cstr(self.version_directory, 'HEADER')}...")
 
         # check to record that we're in a new training session
