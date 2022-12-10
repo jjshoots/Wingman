@@ -117,7 +117,7 @@ class Wingman:
             self.fresh_directory = True
             print(
                 cstr(
-                    "Weights directory not found, generating new one in 3 seconds...",
+                    "New training instance detected, generating weights directory in 3 seconds...",
                     "WARNING",
                 )
             )
