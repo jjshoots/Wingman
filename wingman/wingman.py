@@ -279,7 +279,7 @@ class Wingman:
             else:
                 # save the network to intermediary if we crossed the max number of skips
                 print(
-                    f"Passed {self.cfg.max_skips} intervals without saving so far, saving weights to: {cstr('./weights-1.pth', 'OKCYAN')}"
+                    f"Passed {self.cfg.max_skips} intervals without saving so far, saving weights to: {cstr(self.intermediary_file, 'OKCYAN')}"
                 )
                 self.skips = 0
                 return True, self.intermediary_file, self.optim_file
@@ -390,6 +390,7 @@ class Wingman:
                     )
                 )
 
+        self.mark_number = 0
         # while the file exists, try to look for a file one version later
         while os.path.isfile(self.model_file):
             self.mark_number += 1
@@ -399,7 +400,7 @@ class Wingman:
             )
 
         # once the file version doesn't exist, decrement by one and use that file
-        self.mark_number -= 1 if self.mark_number > 0 else 0
+        self.mark_number = max(self.mark_number - 1, 0)
         self.model_file = os.path.join(
             self.version_directory,
             f"weights{self.mark_number}.pth",
@@ -411,7 +412,7 @@ class Wingman:
             self.lowest_loss = np.load(self.status_file).item()
 
             print(
-                f"Using weights file: {cstr('{self.version_directory}/weights{self.mark_number}.pth', 'OKGREEN')}"
+                f"Using weights file: {cstr(f'{self.version_directory}/weights{self.mark_number}.pth', 'OKGREEN')}"
             )
 
             print(f"Lowest Running Loss for Net: {cstr(self.lowest_loss, 'OKCYAN')}")
