@@ -390,8 +390,8 @@ class Wingman:
                     )
                 )
 
-        self.mark_number = 0
         # while the file exists, try to look for a file one version later
+        self.mark_number = 0
         while os.path.isfile(self.model_file):
             self.mark_number += 1
             self.model_file = os.path.join(
