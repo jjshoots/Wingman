@@ -3,7 +3,7 @@ import argparse
 import math
 import os
 import time
-from typing import Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 import torch
@@ -111,8 +111,10 @@ class Wingman:
         print(f"Using Device {cstr(self.device, 'HEADER')}")
         print(f"Saving weights to {cstr(self.version_directory, 'HEADER')}...")
 
-        # record that we're in a new training session
+        # check to record that we're in a new training session
+        self.fresh_directory = False
         if not os.path.isdir(self.version_directory):
+            self.fresh_directory = True
             print(
                 cstr(
                     "Weights directory not found, generating new one in 3 seconds...",
@@ -217,7 +219,7 @@ class Wingman:
 
         return cfg
 
-    def checkpoint(self, loss: float, step: int) -> Tuple[bool, str, str]:
+    def checkpoint(self, loss: float, step: int | None = None) -> Tuple[bool, str, str]:
         """checkpoint.
 
         Records training every logging_interval steps.
@@ -229,11 +231,15 @@ class Wingman:
 
         Args:
             loss (float): learning loss of the model as a detached float
-            step (int): step number
+            step (int | None): step number, automatically incremented if None
 
         Returns:
-            Tuple[bool, str, str]:
+            Tuple[bool, str, str]: to_update, weights_file, optim_file
         """
+        # if step is None, we automatically increment
+        if step is None:
+            step = self.previous_checkpoint_step + 1
+
         # check that our step didn't go in reverse
         assert step >= self.previous_checkpoint_step, cstr(
             f"We can't step backwards! Got step {step} but the previous logging step was {self.previous_checkpoint_step}.",
@@ -357,7 +363,7 @@ class Wingman:
 
     def get_weight_files(
         self, latest: bool = True
-    ) -> Tuple[bool, Optional[str], Optional[str]]:
+    ) -> Tuple[bool, str, str]:
         """get_weight_files.
 
         Returns three things:
@@ -369,10 +375,8 @@ class Wingman:
             latest (bool): whether we want the latest file or the one determined by `mark_number`
 
         Returns:
-            Tuple[bool, Optional[str], Optional[str]]:
+            Tuple[bool, str, str]: have_file, weights_file, optim_file
         """
-        have_file = False
-
         # if we don't need the latest file, get the one specified
         if not latest:
             if os.path.isfile(self.model_file):
@@ -380,8 +384,7 @@ class Wingman:
                     self.version_directory,
                     f"weights{self.mark_number}.pth",
                 )
-                have_file = True
-                return have_file, self.model_file, self.optim_file
+                return True, self.model_file, self.optim_file
             else:
                 raise ValueError(
                     cstr(
@@ -406,33 +409,29 @@ class Wingman:
             f"weights{self.mark_number}.pth",
         )
 
-        # if there's no files, ignore, otherwise, print the file
-        if os.path.isfile(self.model_file):
+        # if the file doesn't exist, notify and ignore
+        if not os.path.isfile(self.model_file):
+            if not self.fresh_directory:
+                print(
+                    cstr(
+                        "No weights file found, generating new one during training.",
+                        "WARNING",
+                    )
+                )
+            self.fresh_directory = False
+
+            return False, self.model_file, self.optim_file
+        else:
             # hitch a ride to update the lowest running loss
             self.lowest_loss = np.load(self.status_file).item()
 
             print(
                 f"Using weights file: {cstr(f'{self.version_directory}/weights{self.mark_number}.pth', 'OKGREEN')}"
             )
-
             print(f"Lowest Running Loss for Net: {cstr(self.lowest_loss, 'OKCYAN')}")
 
-            have_file = True
-        else:
-            print(
-                cstr(
-                    "No weights file found, generating new one during training.",
-                    "WARNING",
-                )
-            )
-            have_file = False
+            # check if the optim file exists
+            if not os.path.isfile(self.optim_file):
+                print(cstr("Optim file not found, please be careful!", "WARNING"))
 
-        # check if the optim file exists
-        if not os.path.isfile(self.optim_file):
-            print(cstr("Optim file not found, please be careful!", "WARNING"))
-
-        # return depending on whether we've found the file
-        if have_file:
-            return have_file, self.model_file, self.optim_file
-        else:
-            return have_file, None, None
+            return True, self.model_file, self.optim_file
