@@ -10,6 +10,8 @@ import torch
 import wandb
 import yaml
 
+from .print_utils import cstr
+
 
 class Wingman:
     """Wingman.
@@ -65,36 +67,27 @@ class Wingman:
             self.cfg.logging_interval > 0
         ), f"logging_interval must be a positive number, got {self.cfg.logging_interval}."
 
-        # the interval before we save things
-        self.logging_interval = self.cfg.logging_interval
-
-        # maximum skips allowed before save to intermediary
-        self.max_skips = self.cfg.max_skips
+        # the logger
+        self.log = dict()
 
         # runtime variables
         self.num_losses = 0
         self.cumulative_loss = 0
         self.lowest_loss = math.inf
-        self.next_log_step = self.logging_interval
+        self.next_log_step = self.cfg.logging_interval
         self.previous_checkpoint_step = 0
         self.skips = 0
-
-        # the logger
-        self.log = dict()
-
-        # minimum required before new weight file is made
-        self.greater_than = self.cfg.greater_than
 
         # weight file variables
         self.directory = os.path.dirname(__file__)
         self.version_number = self.cfg.version_number
         self.mark_number = self.cfg.mark_number
+        self.previous_mark_number = -1
 
         # directory itself
         self.version_directory = os.path.join(
             self.cfg.weights_directory, f"Version{self.version_number}"
         )
-        self.version_dir_print = self.version_directory.split("/")[-2]
 
         # file paths
         self.model_file = os.path.join(
@@ -115,12 +108,17 @@ class Wingman:
         )
 
         print("--------------𓆩𓆪--------------")
-        print(f"Using Device {self.device}")
-        print(f"Saving weights to {self.version_directory}...")
+        print(f"Using Device {cstr(self.device, 'HEADER')}")
+        print(f"Saving weights to {cstr(self.version_directory, 'HEADER')}...")
 
         # record that we're in a new training session
         if not os.path.isdir(self.version_directory):
-            print("Weights directory not found, generating new one in 3 seconds...")
+            print(
+                cstr(
+                    "Weights directory not found, generating new one in 3 seconds...",
+                    "WARNING",
+                )
+            )
             time.sleep(3)
             os.makedirs(self.version_directory)
 
@@ -143,7 +141,6 @@ class Wingman:
         parser = argparse.ArgumentParser(description=self.experiment_description)
 
         with open(self.config_yaml) as f:
-
             # read in the file
             config = yaml.load(f, Loader=yaml.FullLoader)
 
@@ -165,14 +162,16 @@ class Wingman:
                 "wandb_project",
             ]
             for item in assertation_list:
-                assert item in config, f"Missing parameter {item} in config file."
+                assert item in config, cstr(
+                    f"Missing parameter {item} in config file.", "FAIL"
+                )
 
+            # override version number if needed
+            if config["version_number"] is None:
+                config["version_number"] = np.random.randint(999999)
+
+            # add all to argparse
             for item in config:
-                # exclusively for version number only
-                if item == "version_number":
-                    if config[item] is None:
-                        config[item] = np.random.randint(999999)
-
                 parser.add_argument(
                     f"--{item}",
                     type=type(config[item]),
@@ -235,78 +234,91 @@ class Wingman:
         Returns:
             Tuple[bool, str, str]:
         """
-        # indicator on whether we need to save the weights
-        update = False
-
         # check that our step didn't go in reverse
-        assert (
-            step >= self.previous_checkpoint_step
-        ), f"We can't step backwards! Got step {step} but the previous logging step was {self.previous_checkpoint_step}."
+        assert step >= self.previous_checkpoint_step, cstr(
+            f"We can't step backwards! Got step {step} but the previous logging step was {self.previous_checkpoint_step}.",
+            "FAIL",
+        )
         self.previous_checkpoint_step = step
 
-        # accumulate the loss
+        # log to wandb if needed
+        if self.cfg.wandb:
+            self.wandb_log()
+
+        """ACCUMULATE LOSS"""
         self.cumulative_loss += loss
         self.num_losses += 1.0
 
-        # check if n steps have passed and it is not the first step, we save here
-        if step >= self.next_log_step:
-            # compute the next time we need to log
-            self.next_log_step = (
-                int(step / self.logging_interval) + 1
-            ) * self.logging_interval
+        # if we haven't passed the required number of steps
+        if step < self.next_log_step:
+            return False, self.model_file, self.optim_file
 
-            # record the losses and reset the cumulative
-            avg_loss = self.cumulative_loss / self.num_losses
-            self.cumulative_loss = 0.0
-            self.num_losses = 0.0
+        """GET NEW AVG LOSS"""
+        # record the losses and reset the cumulative
+        avg_loss = self.cumulative_loss / self.num_losses
+        self.cumulative_loss = 0.0
+        self.num_losses = 0.0
 
-            # always print on n intervals
-            print(
-                f"Step {step}; Average Loss {avg_loss:.5f}; Lowest Average Loss {self.lowest_loss:.5f}"
-            )
+        # compute the next time we need to log
+        self.next_log_step = (
+            int(step / self.cfg.logging_interval) + 1
+        ) * self.cfg.logging_interval
 
-            # log to wandb if needed
-            if self.cfg.wandb:
-                self.wandb_log()
+        # always print on n intervals
+        print(
+            f"Step {cstr(step, 'OKCYAN')}; Average Loss {cstr(f'{avg_loss:.5f}', 'OKCYAN')}; Lowest Average Loss {cstr(f'{self.lowest_loss:.5f}', 'OKCYAN')}"
+        )
 
-            # perform a save if we have found a new lowest loss
-            if avg_loss < self.lowest_loss:
-                # redefine the new lowest loss
-                self.lowest_loss = avg_loss
-
-                # reset the number of skips
-                self.skips = 0
-
-                # increment the mark number
-                if self.cfg.increment:
-                    # regenerate the weights_file path
-                    self.model_file = os.path.join(
-                        self.version_directory,
-                        f"weights{self.mark_number}.pth",
-                    )
-                    self.mark_number += 1
-
-                print(
-                    f"New lowest point, saving weights to: {self.version_dir_print}/weights{self.mark_number}.pth"
-                )
-
-                # record the lowest running loss in the status file
-                np.save(self.status_file, self.lowest_loss)
-
-                update = True
+        """CHECK IF NEW LOSS IS BETTER"""
+        # if we don't meet the criteria for saving
+        if avg_loss >= self.lowest_loss - self.cfg.greater_than:
+            # accumulate skips
+            if self.skips < self.cfg.max_skips:
+                self.skips += 1
+                return False, self.model_file, self.optim_file
             else:
                 # save the network to intermediary if we crossed the max number of skips
-                if self.skips >= self.max_skips:
-                    self.skips = 0
-                    print(
-                        f"Passed {self.max_skips} intervals without saving so far, saving weights to: /weights-1.pth"
-                    )
+                print(
+                    f"Passed {self.cfg.max_skips} intervals without saving so far, saving weights to: {cstr('./weights-1.pth', 'OKCYAN')}"
+                )
+                self.skips = 0
+                return True, self.intermediary_file, self.optim_file
 
-                    return True, self.intermediary_file, self.optim_file
-                else:
-                    self.skips += 1
+        """NEW LOSS IS BETTER"""
+        # redefine the new lowest loss and reset the skips
+        self.lowest_loss = avg_loss
+        self.skips = 0
 
-        return update, self.model_file, self.optim_file
+        # no increment means just return the files
+        if not self.cfg.increment:
+            return True, self.model_file, self.optim_file
+
+        # check if we are safe to increment mark numbers and regenerate weights file
+        if self.previous_mark_number == -1 or os.path.isfile(self.model_file):
+            self.previous_mark_number = self.mark_number
+            self.model_file = os.path.join(
+                self.version_directory,
+                f"weights{self.mark_number}.pth",
+            )
+            self.mark_number += 1
+
+        else:
+            print(
+                cstr(
+                    "Didn't save weights file for the previous mark number (self.mark_number), not incrementing mark number.",
+                    "WARNING",
+                )
+            )
+            self.mark_number = self.previous_mark_number
+
+        # record the lowest running loss in the status file
+        np.save(self.status_file, self.lowest_loss)
+
+        print(
+            f"New lowest point, saving weights to: {cstr(self.model_file, 'OKGREEN')}"
+        )
+
+        return True, self.model_file, self.optim_file
 
     def wandb_log(self) -> None:
         """wandb_log.
@@ -320,9 +332,9 @@ class Wingman:
         Returns:
             None:
         """
-        assert isinstance(
-            self.log, dict
-        ), f"log must be dictionary, currently it is {self.log}."
+        assert isinstance(self.log, dict), cstr(
+            f"log must be dictionary, currently it is {self.log}.", "FAIL"
+        )
         wandb.log(self.log)
 
     def write_auxiliary(
@@ -370,6 +382,13 @@ class Wingman:
                 )
                 have_file = True
                 return have_file, self.model_file, self.optim_file
+            else:
+                raise ValueError(
+                    cstr(
+                        f"Mark number {self.mark_number} was requested, but it doesn't exist.",
+                        "FAIL",
+                    )
+                )
 
         # while the file exists, try to look for a file one version later
         while os.path.isfile(self.model_file):
@@ -392,19 +411,24 @@ class Wingman:
             self.lowest_loss = np.load(self.status_file).item()
 
             print(
-                f"Using weights file: /{self.version_dir_print}/weights{self.mark_number}.pth"
+                f"Using weights file: {cstr('{self.version_directory}/weights{self.mark_number}.pth', 'OKGREEN')}"
             )
 
-            print(f"Lowest Running Loss for Net: {self.lowest_loss}")
+            print(f"Lowest Running Loss for Net: {cstr(self.lowest_loss, 'OKCYAN')}")
 
             have_file = True
         else:
-            print("No weights file found, generating new one during training.")
+            print(
+                cstr(
+                    "No weights file found, generating new one during training.",
+                    "WARNING",
+                )
+            )
             have_file = False
 
         # check if the optim file exists
         if not os.path.isfile(self.optim_file):
-            print("Optim file not found, please be careful!")
+            print(cstr("Optim file not found, please be careful!", "WARNING"))
 
         # return depending on whether we've found the file
         if have_file:
