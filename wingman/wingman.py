@@ -247,10 +247,6 @@ class Wingman:
         )
         self.previous_checkpoint_step = step
 
-        # log to wandb if needed
-        if self.cfg.wandb:
-            self.wandb_log()
-
         """ACCUMULATE LOSS"""
         self.cumulative_loss += loss
         self.num_losses += 1.0
@@ -258,6 +254,10 @@ class Wingman:
         # if we haven't passed the required number of steps
         if step < self.next_log_step:
             return False, self.model_file, self.optim_file
+
+        # log to wandb if needed, but only on the logging steps
+        if self.cfg.wandb:
+            self.wandb_log()
 
         """GET NEW AVG LOSS"""
         # record the losses and reset the cumulative
