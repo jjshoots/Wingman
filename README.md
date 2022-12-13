@@ -94,7 +94,7 @@ After defining your `config.yaml` file, the basic usage of Wingman is as follows
     # this checking is done using the `version_number` param, if `latest=True` is set,
     # Wingman automatically searches for the latest model checkpoint,
     # otherwise, Wingman uses the checkpoint specified by `mark_number`
-    have_file, weight_file, optim_file = self.get_weight_files(latest=True)
+    have_file, weight_file, optim_file = wm.get_weight_files(latest=True)
     if have_file:
         # Wingman simply returns a string of where the weight files are
         # no unnecessary wrapping!
