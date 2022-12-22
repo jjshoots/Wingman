@@ -341,7 +341,8 @@ class Wingman:
         assert isinstance(self.log, dict), cstr(
             f"log must be dictionary, currently it is {self.log}.", "FAIL"
         )
-        wandb.log(self.log)
+        if self.cfg.wandb:
+            wandb.log(self.log)
 
     def write_auxiliary(
         self, data: np.ndarray, variable_name: str, precision: str = "%1.3f"
