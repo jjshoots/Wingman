@@ -295,27 +295,25 @@ class Wingman:
         self.lowest_loss = avg_loss
         self.skips = 0
 
-        # no increment means just return the files
-        if not self.cfg.increment:
-            return True, self.model_file, self.optim_file
-
-        # check if we are safe to increment mark numbers and regenerate weights file
-        if self.previous_mark_number == -1 or os.path.isfile(self.model_file):
-            self.previous_mark_number = self.mark_number
-            self.model_file = os.path.join(
-                self.version_directory,
-                f"weights{self.mark_number}.pth",
-            )
-            self.mark_number += 1
-
-        else:
-            print(
-                cstr(
-                    "Didn't save weights file for the previous mark number (self.mark_number), not incrementing mark number.",
-                    "WARNING",
+        # increment means return the files with incremented mark number
+        if self.cfg.increment:
+            # check if we are safe to increment mark numbers and regenerate weights file
+            if self.previous_mark_number == -1 or os.path.isfile(self.model_file):
+                self.previous_mark_number = self.mark_number
+                self.model_file = os.path.join(
+                    self.version_directory,
+                    f"weights{self.mark_number}.pth",
                 )
-            )
-            self.mark_number = self.previous_mark_number
+                self.mark_number += 1
+
+            else:
+                print(
+                    cstr(
+                        "Didn't save weights file for the previous mark number (self.mark_number), not incrementing mark number.",
+                        "WARNING",
+                    )
+                )
+                self.mark_number = self.previous_mark_number
 
         # record the lowest running loss in the status file
         np.save(self.status_file, self.lowest_loss)
