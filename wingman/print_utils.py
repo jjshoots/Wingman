@@ -18,7 +18,7 @@ def cstr(x: Any, ctype: str) -> str:
     return f"{c_colors[ctype]}{x}{end_c}"
 
 
-log_flag = cstr(cstr("wingman 𓆩𓆪", "HEADER"), "OKBLUE")
+log_flag = cstr(cstr("wingman", "HEADER"), "OKBLUE")
 
 
 def wingman_log(x: Any):
