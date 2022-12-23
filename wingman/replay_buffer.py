@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 from torch.utils.data import Dataset
 
-from .print_utils import cstr
+from .print_utils import cstr, wm_log
 
 
 class ReplayBuffer(Dataset):
@@ -60,7 +60,7 @@ class ReplayBuffer(Dataset):
                     )
 
             mem_size = sum([d.nbytes for d in self.memory])
-            print(cstr(f"Replay Buffer Size: {mem_size / 1e9} gigabytes.", "OKCYAN"))
+            wm_log(cstr(f"Replay Buffer Size: {mem_size / 1e9} gigabytes.", "OKCYAN"))
 
         # assert that the number of lists in memory is same as data to push
         assert len(data) == len(self.memory), cstr(

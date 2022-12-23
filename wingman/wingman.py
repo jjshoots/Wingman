@@ -10,7 +10,7 @@ import torch
 import wandb
 import yaml
 
-from .print_utils import cstr
+from .print_utils import cstr, wm_print
 
 
 class Wingman:
@@ -107,15 +107,15 @@ class Wingman:
             "weights-1.pth",
         )
 
-        print("--------------𓆩𓆪--------------")
-        print(f"Using device {cstr(self.device, 'HEADER')}")
-        print(f"Saving weights to {cstr(self.version_directory, 'HEADER')}...")
+        wm_print("--------------𓆩𓆪--------------")
+        wm_print(f"Using device {cstr(self.device, 'HEADER')}")
+        wm_print(f"Saving weights to {cstr(self.version_directory, 'HEADER')}...")
 
         # check to record that we're in a new training session
         self.fresh_directory = False
         if not os.path.isdir(self.version_directory):
             self.fresh_directory = True
-            print(
+            wm_print(
                 cstr(
                     "New training instance detected, generating weights directory in 3 seconds...",
                     "WARNING",
@@ -271,7 +271,7 @@ class Wingman:
         ) * self.cfg.logging_interval
 
         # always print on n intervals
-        print(
+        wm_print(
             f"Step {cstr(step, 'OKCYAN')}; Average Loss {cstr(f'{avg_loss:.5f}', 'OKCYAN')}; Lowest Average Loss {cstr(f'{self.lowest_loss:.5f}', 'OKCYAN')}"
         )
 
@@ -284,7 +284,7 @@ class Wingman:
                 return False, self.model_file, self.optim_file
             else:
                 # save the network to intermediary if we crossed the max number of skips
-                print(
+                wm_print(
                     f"Passed {self.cfg.max_skips} intervals without saving so far, saving weights to: {cstr(self.intermediary_file, 'OKCYAN')}"
                 )
                 self.skips = 0
@@ -307,7 +307,7 @@ class Wingman:
                 self.mark_number += 1
 
             else:
-                print(
+                wm_print(
                     cstr(
                         "Didn't save weights file for the previous mark number (self.mark_number), not incrementing mark number.",
                         "WARNING",
@@ -318,7 +318,7 @@ class Wingman:
         # record the lowest running loss in the status file
         np.save(self.status_file, self.lowest_loss)
 
-        print(
+        wm_print(
             f"New lowest point, saving weights to: {cstr(self.model_file, 'OKGREEN')}"
         )
 
@@ -409,7 +409,7 @@ class Wingman:
         # if the file doesn't exist, notify and ignore
         if not os.path.isfile(self.model_file):
             if not self.fresh_directory:
-                print(
+                wm_print(
                     cstr(
                         "No weights file found, generating new one during training.",
                         "WARNING",
@@ -422,13 +422,13 @@ class Wingman:
             # hitch a ride to update the lowest running loss
             self.lowest_loss = np.load(self.status_file).item()
 
-            print(
+            wm_print(
                 f"Using weights file: {cstr(f'{self.version_directory}/weights{self.mark_number}.pth', 'OKGREEN')}"
             )
-            print(f"Lowest Running Loss for Net: {cstr(self.lowest_loss, 'OKCYAN')}")
+            wm_print(f"Lowest Running Loss for Net: {cstr(self.lowest_loss, 'OKCYAN')}")
 
             # check if the optim file exists
             if not os.path.isfile(self.optim_file):
-                print(cstr("Optim file not found, please be careful!", "WARNING"))
+                wm_print(cstr("Optim file not found, please be careful!", "WARNING"))
 
             return True, self.model_file, self.optim_file
