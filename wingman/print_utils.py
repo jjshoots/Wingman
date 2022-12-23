@@ -21,5 +21,5 @@ def cstr(x: Any, ctype: str) -> str:
 log_flag = cstr(cstr("wingman", "HEADER"), "OKBLUE")
 
 
-def wingman_log(x: Any):
+def wm_print(x: Any):
     print(f"{log_flag}: {x}")
