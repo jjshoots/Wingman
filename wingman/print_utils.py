@@ -18,7 +18,7 @@ def cstr(x: Any, ctype: str) -> str:
     return f"{c_colors[ctype]}{x}{end_c}"
 
 
-log_flag = cstr(cstr("wingman", "BOLD"), "OKBLUE")
+log_flag = cstr(cstr("wingman", "BOLD"), "OKCYAN")
 
 
 def wm_print(x: Any):
