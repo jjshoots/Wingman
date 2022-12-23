@@ -24,13 +24,16 @@ class ReplayBuffer(Dataset):
 
         return (*data,)
 
-    def push(self, data: list[np.ndarray], bulk: bool = False):
+    def push(self, data: list[np.ndarray | bool | int | float], bulk: bool = False):
         # check if we are bulk adding things in and assert lengths
         bulk_size = 1
         if bulk:
+            assert all([isinstance(data, np.ndarray)]), cstr(f"All things must be np.ndarray for bulk data.", "FAIL")
+
             bulk_size = data[0].shape[0]
+
             assert all([len(d[0]) == bulk_size for d in data]), cstr(
-                f"All things in data must have same len for the first dimension. Received data with {[len(d) for d in data]} items respectively.",
+                f"All things in data must have same len for the first dimension for bulk data. Received data with {[len(d) for d in data]} items respectively.",
                 "FAIL",
             )
 
