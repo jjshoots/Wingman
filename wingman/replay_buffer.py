@@ -1,5 +1,9 @@
+from __future__ import annotations
+
 import numpy as np
 from torch.utils.data import Dataset
+
+from .print_utils import cstr
 
 
 class ReplayBuffer(Dataset):
@@ -20,21 +24,20 @@ class ReplayBuffer(Dataset):
 
         return (*data,)
 
-    def push(self, data, bulk=False):
-        # check if we are bulk adding things in
+    def push(self, data: list[np.ndarray], bulk: bool = False):
+        # check if we are bulk adding things in and assert lengths
         bulk_size = 1
         if bulk:
             bulk_size = data[0].shape[0]
-            for thing in data:
-                if len(thing) != bulk_size:
-                    raise AssertionError(
-                        "All things in data must have same len for the first dimension."
-                    )
+            assert all([len(d[0]) == bulk_size for d in data]), cstr(
+                f"All things in data must have same len for the first dimension. Received data with {[len(d) for d in data]} items respectively.",
+                "FAIL",
+            )
 
         # expand dims of things that only have 1 dim
         def _ensure_dims(thing):
-            thing = np.array(thing)
-            if len(thing.shape) == 0 + (bulk * 1):
+            thing = np.asarray(thing)
+            if len(thing.shape) == int(bulk):
                 thing = np.expand_dims(thing, axis=-1)
             return thing
 
@@ -53,15 +56,14 @@ class ReplayBuffer(Dataset):
                         np.zeros((self.mem_size, *thing.shape[1:]), dtype=np.float32)
                     )
 
-            mem_size = 0
-            for thing in self.memory:
-                mem_size += thing.nbytes
-            print(f"Replay Buffer Size: {mem_size / 1e9} gigabytes.")
+            mem_size = sum([d.nbytes for d in self.memory])
+            print(cstr(f"Replay Buffer Size: {mem_size / 1e9} gigabytes.", "OKCYAN"))
 
         # assert that the number of lists in memory is same as data to push
-        assert len(data) == len(
-            self.memory
-        ), "data length not similar to memory buffer length"
+        assert len(data) == len(self.memory), cstr(
+            f"Data length not similar to memory buffer length. Replay buffer has {len(self.memory)} items, but received {len(data)} items.",
+            "FAIL",
+        )
 
         # put stuff in memory
         i = self.count % self.mem_size
@@ -83,5 +85,5 @@ class ReplayBuffer(Dataset):
         self.count += bulk_size
 
     @property
-    def is_full(self):
+    def is_full(self) -> bool:
         return self.count >= self.mem_size
