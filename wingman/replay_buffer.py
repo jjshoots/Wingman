@@ -18,7 +18,7 @@ class ReplayBuffer(Dataset):
         return min(self.mem_size, self.count)
 
     def __getitem__(self, idx):
-        return (d[idx] for d in self.memory)
+        return list(d[idx] for d in self.memory)
 
     def push(self, data: list[np.ndarray | float | int | bool], bulk: bool = False):
         # check if we are bulk adding things in and assert lengths
