@@ -24,21 +24,23 @@ class ReplayBuffer(Dataset):
 
         return (*data,)
 
-    def push(self, data: list[np.ndarray | bool | int | float], bulk: bool = False):
+    def push(self, data: list[np.ndarray], bulk: bool = False):
         # check if we are bulk adding things in and assert lengths
         bulk_size = 1
         if bulk:
-            assert all([isinstance(data, np.ndarray)]), cstr(f"All things must be np.ndarray for bulk data.", "FAIL")
-
-            bulk_size = data[0].shape[0]
-
-            assert all([len(d[0]) == bulk_size for d in data]), cstr(
-                f"All things in data must have same len for the first dimension for bulk data. Received data with {[len(d) for d in data]} items respectively.",
-                "FAIL",
+            assert all([isinstance(data, np.ndarray)]), cstr(
+                "All things must be np.ndarray for bulk data.", "FAIL"
             )
 
+            bulk_size = data[0].shape[0]  # pyright: ignore
+
+            assert all([len(d) == bulk_size for d in data]), cstr(
+                f"All things in data must have same len for the first dimension for bulk data. Received data with {[len(d) for d in data]} items respectively.",
+                "FAIL",
+            )  # pyright: ignore
+
         # expand dims of things that only have 1 dim
-        def _ensure_dims(thing):
+        def _ensure_dims(thing) -> np.ndarray:
             thing = np.asarray(thing)
             if len(thing.shape) == int(bulk):
                 thing = np.expand_dims(thing, axis=-1)

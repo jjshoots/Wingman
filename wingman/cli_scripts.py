@@ -3,6 +3,8 @@ import os
 import shutil
 import sys
 
+from .print_utils import cstr, wm_print
+
 
 def _get_dir_size(path):
     total = 0
@@ -21,9 +23,9 @@ def compress_weights():
     Example CLI usage:
     `wingman-compress-weights [optional weights directory]`
     """
-    print("---------------------------------------------")
-    print("Beginning compression...")
-    print("---------------------------------------------")
+    wm_print("---------------------------------------------")
+    wm_print("Beginning compression...")
+    wm_print("---------------------------------------------")
 
     target_dir = "./weights"
     if len(sys.argv) > 1:
@@ -70,7 +72,7 @@ def compress_weights():
             weights.remove(intermediary)
 
         if len(weights) > 0:
-            print(f"Compressing {dir}...")
+            wm_print(f"Compressing {dir}...")
 
             # for the remainder of the list, delete all the weights
             for weight in weights:
@@ -79,24 +81,27 @@ def compress_weights():
             # rename the latest weights to 0
             os.rename(latest, os.path.join(dir, "weights0.pth"))
 
-            print(f"Compressed {dir}.")
+            wm_print(f"Compressed {cstr(dir, 'WARNING')}.")
         else:
-            print(f"Nothing to compress in {dir}.")
+            wm_print(f"Nothing to compress in {cstr(dir, 'OKGREEN')}.")
 
     # delete flagged directories
     for dir in to_delete:
         shutil.rmtree(dir, ignore_errors=False, onerror=None)
-        print(f"Deleted {dir}.")
+        wm_print(f"Deleted {cstr(dir, 'WARNING')}.")
 
     # get the final filesize
     final_size = _get_dir_size(target_dir)
 
     # printout
-    print("---------------------------------------------")
-    print(f"Original disk usage: {original_size / 1e9} gigabytes")
-    print(f"Removed {(original_size - final_size) / 1e9} gigabytes")
-    print(f"Final disk usage: {final_size / 1e9} gigabytes")
-    print("---------------------------------------------")
+    wm_print("---------------------------------------------")
+    wm_print(f"Original disk usage: {cstr(original_size / 1e9, 'OKGREEN')} gigabytes.")
+    wm_print(
+        f"Removed {cstr((original_size - final_size) / 1e9, 'WARNING')} gigabytes."
+    )
+    wm_print(f"Final disk usage: {cstr(final_size / 1e9, 'WARNING')} gigabytes.")
+    wm_print("If this is unsatisactory, consider deleting weight directories manually.")
+    wm_print("---------------------------------------------")
 
 
 def generate_yaml():
@@ -112,3 +117,5 @@ def generate_yaml():
         target = sys.argv[1]
 
     shutil.copyfile(source, target)
+
+    wm_print(f"Generated config file at: {cstr(target, 'OKGREEN')}.")
