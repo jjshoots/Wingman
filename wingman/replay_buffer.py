@@ -20,7 +20,7 @@ class ReplayBuffer(Dataset):
     def __getitem__(self, idx):
         return (d[idx] for d in self.memory)
 
-    def push(self, data: tuple[np.ndarray | float | int | bool], bulk: bool = False):
+    def push(self, data: list[np.ndarray | float | int | bool], bulk: bool = False):
         # check if we are bulk adding things in and assert lengths
         bulk_size = 1
         if bulk:
