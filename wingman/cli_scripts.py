@@ -37,6 +37,11 @@ def compress_weights():
     # all versions
     versions = glob.glob(f"./{target_dir}/Version*")
 
+    # debug version, remove from all versions
+    debug_version = f"./{target_dir}/VersionDebug"
+    if debug_version in versions:
+        versions.remove(debug_version)
+
     # which folders to delete
     empty_versions = []
 
@@ -88,6 +93,11 @@ def compress_weights():
         shutil.rmtree(version, ignore_errors=False, onerror=None)
         wm_print(f"Deleted {cstr(version, 'WARNING')}.")
 
+    # delete the debug directory
+    if debug_version in versions:
+        shutil.rmtree(debug_version, ignore_errors=False, onerror=None)
+        wm_print(f"Deleted {cstr(debug_version, 'WARNING')}.")
+
     # get the final filesize
     final_size = _get_dir_size(target_dir)
 
@@ -98,7 +108,6 @@ def compress_weights():
         f"Removed {cstr((original_size - final_size) / 1e9, 'WARNING')} gigabytes."
     )
     wm_print(f"Final disk usage: {cstr(final_size / 1e9, 'WARNING')} gigabytes.")
-    wm_print("If this is unsatisactory, consider deleting weight directories manually.")
     wm_print("---------------------------------------------")
 
 
