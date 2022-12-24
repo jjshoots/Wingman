@@ -18,13 +18,9 @@ class ReplayBuffer(Dataset):
         return min(self.mem_size, self.count)
 
     def __getitem__(self, idx):
-        data = []
-        for item in self.memory:
-            data.append(item[idx])
+        return (d[idx] for d in self.memory)
 
-        return (*data,)
-
-    def push(self, data: list[np.ndarray], bulk: bool = False):
+    def push(self, data: list[np.ndarray | float | int | bool], bulk: bool = False):
         # check if we are bulk adding things in and assert lengths
         bulk_size = 1
         if bulk:
@@ -34,10 +30,10 @@ class ReplayBuffer(Dataset):
 
             bulk_size = data[0].shape[0]  # pyright: ignore
 
-            assert all([len(d) == bulk_size for d in data]), cstr(
-                f"All things in data must have same len for the first dimension for bulk data. Received data with {[len(d) for d in data]} items respectively.",
+            assert all([len(d) == bulk_size for d in data]), cstr(  # pyright: ignore
+                f"All things in data must have same len for the first dimension for bulk data. Received data with {[len(d) for d in data]} items respectively.",  # pyright: ignore
                 "FAIL",
-            )  # pyright: ignore
+            )
 
         # expand dims of things that only have 1 dim
         def _ensure_dims(thing) -> np.ndarray:
@@ -46,12 +42,12 @@ class ReplayBuffer(Dataset):
                 thing = np.expand_dims(thing, axis=-1)
             return thing
 
-        data = list(map(_ensure_dims, data))
+        np_data = list(map(_ensure_dims, data))
 
         # instantiate the memory if it does not exist
         if self.count == 0:
             self.memory = []
-            for thing in data:
+            for thing in np_data:
                 if not bulk:
                     self.memory.append(
                         np.zeros((self.mem_size, *thing.shape), dtype=np.float32)
@@ -65,14 +61,14 @@ class ReplayBuffer(Dataset):
             wm_print(cstr(f"Replay Buffer Size: {mem_size / 1e9} gigabytes.", "OKCYAN"))
 
         # assert that the number of lists in memory is same as data to push
-        assert len(data) == len(self.memory), cstr(
-            f"Data length not similar to memory buffer length. Replay buffer has {len(self.memory)} items, but received {len(data)} items.",
+        assert len(np_data) == len(self.memory), cstr(
+            f"Data length not similar to memory buffer length. Replay buffer has {len(self.memory)} items, but received {len(np_data)} items.",
             "FAIL",
         )
 
         # put stuff in memory
         i = self.count % self.mem_size
-        for memory, thing in zip(self.memory, data):
+        for memory, thing in zip(self.memory, np_data):
             if not bulk:
                 memory[i] = thing
             else:
