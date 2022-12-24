@@ -1,7 +1,10 @@
+from __future__ import annotations
+
+import numpy as np
 import torch
 
 
-def gpuize(input, device):
+def gpuize(input, device) -> torch.Tensor:
     """gpuize.
 
     Args:
@@ -15,7 +18,7 @@ def gpuize(input, device):
     return torch.tensor(input).float().to(device)
 
 
-def cpuize(input):
+def cpuize(input) -> np.ndarray:
     """cpuize.
 
     Args:
