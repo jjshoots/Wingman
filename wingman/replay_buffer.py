@@ -24,7 +24,7 @@ class ReplayBuffer(Dataset):
         # check if we are bulk adding things in and assert lengths
         bulk_size = 1
         if bulk:
-            assert all([isinstance(data, np.ndarray)]), cstr(
+            assert all([isinstance(d, np.ndarray) for d in data]), cstr(
                 "All things must be np.ndarray for bulk data.", "FAIL"
             )
 
