@@ -48,8 +48,6 @@ repos:
           - --explain
           - --convention=google
           - --count
-          # TODO: Remove ignoring rules D101, D102, D103, D105
-          - --add-ignore=D100,D107,D101,D102,D103,D105
         exclude: "__init__.py"
         additional_dependencies: ["toml"]
   - repo: local

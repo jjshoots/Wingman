@@ -1,3 +1,4 @@
+"""For fancy printing in Wingman."""
 # colour list
 from typing import Any
 
@@ -15,6 +16,15 @@ end_c = "\033[0m"
 
 
 def cstr(x: Any, ctype: str) -> str:
+    """Makes a string colourful.
+
+    Args:
+        x (Any): the string
+        ctype (str): the colour
+
+    Returns:
+        str: the coloured string
+    """
     return f"{c_colors[ctype]}{x}{end_c}"
 
 
@@ -22,4 +32,9 @@ log_flag = cstr(cstr("wingman", "BOLD"), "OKCYAN")
 
 
 def wm_print(x: Any):
+    """Prints out strings decorated with the wingman status.
+
+    Args:
+        x (Any): the input string.
+    """
     print(f"{log_flag}: {x}")

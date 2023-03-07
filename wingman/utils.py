@@ -1,7 +1,14 @@
+"""Some simple Wingman functionality."""
 from __future__ import annotations
 
 import numpy as np
-import torch
+
+try:
+    import torch
+except ImportError as e:
+    raise ImportError(
+        "Could not import torch, this is not bundled as part of Wingman and has to be installed manually"
+    ) from e
 
 
 def gpuize(input, device) -> torch.Tensor:

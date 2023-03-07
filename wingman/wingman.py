@@ -1,5 +1,6 @@
-#!/usr/bin/env python3
+"""The core of Wingman."""
 from __future__ import annotations
+
 import argparse
 import math
 import os
@@ -7,7 +8,6 @@ import time
 from typing import Tuple
 
 import numpy as np
-import torch
 import wandb
 import yaml
 
@@ -127,12 +127,22 @@ class Wingman:
 
     def __get_device(self):
         """__get_device."""
-        device = "cpu"
-        if torch.cuda.is_available():
-            device = torch.device("cuda:0")
+        from warnings import warn
 
-        self.device = device
-        return device
+        try:
+            import torch
+
+            if torch.cuda.is_available():
+                self.device = torch.device("cuda:0")
+            else:
+                self.device = "cpu"
+        except ImportError:
+            warn(
+                "Could not import torch, this is not bundled as part of Wingman and has to be installed manually"
+            )
+            self.device = "Not Found!"
+
+        return self.device
 
     def __yaml_to_args(self):
         """__yaml_to_args.

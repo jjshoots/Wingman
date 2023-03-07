@@ -1,7 +1,16 @@
+"""Replay buffer implementation with push, automatic overflow, and automatic torch dataset functionality."""
 from __future__ import annotations
 
+from typing import Sequence
+
 import numpy as np
-from torch.utils.data import Dataset
+
+try:
+    from torch.utils.data import Dataset
+except ImportError as e:
+    raise ImportError(
+        "Could not import torch, this is not bundled as part of Wingman and has to be installed manually"
+    ) from e
 
 from .print_utils import cstr, wm_print
 
@@ -9,18 +18,39 @@ from .print_utils import cstr, wm_print
 class ReplayBuffer(Dataset):
     """Replay Buffer implementation of a Torch dataset."""
 
-    def __init__(self, mem_size):
+    def __init__(self, mem_size: int):
+        """__init__.
+
+        Args:
+            mem_size (int): number of transitions the replay buffer aims to hold
+        """
         self.memory = []
         self.mem_size = int(mem_size)
         self.count = 0
 
     def __len__(self):
+        """__len__."""
         return min(self.mem_size, self.count)
 
     def __getitem__(self, idx):
+        """__getitem__.
+
+        Args:
+            idx: index of the tuple to get from the replay buffer
+        """
         return list(d[idx] for d in self.memory)
 
-    def push(self, data: list[np.ndarray | float | int | bool], bulk: bool = False):
+    def push(self, data: Sequence[np.ndarray | float | int | bool], bulk: bool = False):
+        """Adds transition tuples into the replay buffer.
+
+        The data must be either:
+        - an n-long tuple of a single transition
+        - an n-long tuple of m transitions, ie: a list of [m, ...] np arrays with the `bulk` flag set to True
+
+        Args:
+            data (Sequence[np.ndarray | float | int | bool]): data
+            bulk (bool): whether to bulk add stuff into the replay buffer
+        """
         # check if we are bulk adding things in and assert lengths
         bulk_size = 1
         if bulk:
@@ -37,6 +67,14 @@ class ReplayBuffer(Dataset):
 
         # expand dims of things that only have 1 dim
         def _ensure_dims(thing) -> np.ndarray:
+            """Ensures that all arrays are at least [n, ...] and not [n, ].
+
+            Args:
+                thing: input
+
+            Returns:
+                np.ndarray: output
+            """
             thing = np.asarray(thing)
             if len(thing.shape) == int(bulk):
                 thing = np.expand_dims(thing, axis=-1)
@@ -87,4 +125,9 @@ class ReplayBuffer(Dataset):
 
     @property
     def is_full(self) -> bool:
+        """Whether or not the replay buffer has reached capacity.
+
+        Returns:
+            bool: whether the buffer is full
+        """
         return self.count >= self.mem_size

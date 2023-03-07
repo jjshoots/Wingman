@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jj_wingman"
-version = "0.1.35"
+version = "0.1.36"
 authors = [
   { name="Jet", email="taijunjet@hotmail.com" },
 ]
@@ -18,9 +18,15 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dependencies = ["numpy", "torch", "wandb", "pyyaml"]
+dependencies = ["numpy", "wandb", "pyyaml"]
 keywords = ["Machine Learning"]
 license = { file="./LICENSE.txt" }
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["wingman", "wingman.*"]
 
 [project.scripts]
 wingman-generate-yaml = "wingman:generate_yaml"

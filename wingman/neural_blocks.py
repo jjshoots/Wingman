@@ -1,7 +1,12 @@
-#!/usr/bin/env python3
+"""Easy creation of neural networks."""
 from typing import List, Optional
 
-import torch.nn as nn
+try:
+    import torch.nn as nn
+except ImportError as e:
+    raise ImportError(
+        "Could not import torch, this is not bundled as part of Wingman and has to be installed manually"
+    ) from e
 
 
 class NeuralBlocks:
