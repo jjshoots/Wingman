@@ -5,7 +5,7 @@ try:
     import torch.nn as nn
 except ImportError as e:
     raise ImportError(
-        "Could not import torch, this is not bundled as part of Wingman and has to be installed manually"
+        "Could not import torch, this is not bundled as part of Wingman and has to be installed manually."
     ) from e
 
 

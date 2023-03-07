@@ -9,7 +9,7 @@ try:
     from torch.utils.data import Dataset
 except ImportError as e:
     raise ImportError(
-        "Could not import torch, this is not bundled as part of Wingman and has to be installed manually"
+        "Could not import torch, this is not bundled as part of Wingman and has to be installed manually."
     ) from e
 
 from .print_utils import cstr, wm_print
