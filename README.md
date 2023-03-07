@@ -15,6 +15,11 @@ Currently, Wingman is capable of automatically handling:
 
 `pip3 install jj-wingman`
 
+> Wingman does not come with a PyTorch requirement by default, so all torch-functionality is by default disabled.
+> If you wish to use the PyTorch functionality of Wingman, install a compatible Pytorch version for your machine.
+> This is typically done via:
+> `pip3 install torch`
+
 ## Philosophy
 
 Wingman is designed to be very horizontally integrated into your deep learning projects.
