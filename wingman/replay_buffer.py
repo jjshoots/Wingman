@@ -141,9 +141,6 @@ class ReplayBuffer(Dataset):
                     self.mem_size, size=bulk_size, replace=False
                 )
                 idx_stop = []
-
-            print(idx_start)
-            print(idx_stop)
         else:
             idx_start = np.arange(start, stop)
             idx_stop = np.arange(0, rollover)
