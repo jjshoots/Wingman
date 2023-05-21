@@ -1,7 +1,7 @@
 """Replay buffer implementation with push, automatic overflow, and automatic torch dataset functionality."""
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Any, Sequence
 
 import numpy as np
 
@@ -40,7 +40,35 @@ class ReplayBuffer(Dataset):
         """
         return list(d[idx] for d in self.memory)
 
-    def push(self, data: Sequence[np.ndarray | float | int | bool], bulk: bool = False):
+    def __repr__(self):
+        """Printouts parameters of this replay buffer."""
+        return f"""ReplayBuffer of size {self.mem_size} with {len(self.memory)} elements. \n
+        Element shapes are {[elem.shape[1:] for elem in self.memory]}. \n
+        A brief view of the memory: \n
+        {self.memory}
+        """
+
+    @staticmethod
+    def __ensure_dims(thing: Any, bulk: bool) -> np.ndarray:
+        """Ensures that all arrays are at least [n, ...] and not [n, ].
+
+        Args:
+            thing: input
+
+        Returns:
+            np.ndarray: output
+        """
+        thing = np.asarray(thing)
+        if len(thing.shape) == int(bulk):
+            thing = np.expand_dims(thing, axis=-1)
+        return thing
+
+    def push(
+        self,
+        data: Sequence[np.ndarray | float | int | bool],
+        bulk: bool = False,
+        random_rollover: bool = False,
+    ):
         """Adds transition tuples into the replay buffer.
 
         The data must be either:
@@ -50,6 +78,7 @@ class ReplayBuffer(Dataset):
         Args:
             data (Sequence[np.ndarray | float | int | bool]): data
             bulk (bool): whether to bulk add stuff into the replay buffer
+            random_rollover (bool): whether to rollover the data in the replay buffer once full or to randomly insert
         """
         # check if we are bulk adding things in and assert lengths
         bulk_size = 1
@@ -65,22 +94,13 @@ class ReplayBuffer(Dataset):
                 "FAIL",
             )
 
-        # expand dims of things that only have 1 dim
-        def _ensure_dims(thing) -> np.ndarray:
-            """Ensures that all arrays are at least [n, ...] and not [n, ].
+            # assert on memory lengths
+            assert self.mem_size >= bulk_size, cstr(
+                f"Bulk size ({bulk_size}) should be less than or equal to memory size ({self.mem_size}).",
+                "FAIL",
+            )
 
-            Args:
-                thing: input
-
-            Returns:
-                np.ndarray: output
-            """
-            thing = np.asarray(thing)
-            if len(thing.shape) == int(bulk):
-                thing = np.expand_dims(thing, axis=-1)
-            return thing
-
-        np_data = list(map(_ensure_dims, data))
+        np_data = list(map(lambda x: self.__ensure_dims(x, bulk), data))
 
         # instantiate the memory if it does not exist
         if self.count == 0:
@@ -88,15 +108,17 @@ class ReplayBuffer(Dataset):
             for thing in np_data:
                 if not bulk:
                     self.memory.append(
-                        np.zeros((self.mem_size, *thing.shape), dtype=np.float32)
+                        np.zeros((self.mem_size, *thing.shape), dtype=np.float64)
                     )
                 else:
                     self.memory.append(
-                        np.zeros((self.mem_size, *thing.shape[1:]), dtype=np.float32)
+                        np.zeros((self.mem_size, *thing.shape[1:]), dtype=np.float64)
                     )
 
-            mem_size = sum([d.nbytes for d in self.memory])
-            wm_print(cstr(f"Replay Buffer Size: {mem_size / 1e9} gigabytes.", "OKCYAN"))
+            mem_size_bytes = sum([d.nbytes for d in self.memory])
+            wm_print(
+                cstr(f"Replay Buffer Size: {mem_size_bytes / 1e9} gigabytes.", "OKCYAN")
+            )
 
         # assert that the number of lists in memory is same as data to push
         assert len(np_data) == len(self.memory), cstr(
@@ -104,22 +126,32 @@ class ReplayBuffer(Dataset):
             "FAIL",
         )
 
-        # put stuff in memory
-        i = self.count % self.mem_size
-        for memory, thing in zip(self.memory, np_data):
-            if not bulk:
-                memory[i] = thing
+        # indexing for memory positions
+        start = self.count % self.mem_size
+        stop = min(start + bulk_size, self.mem_size)
+        rollover = -(self.mem_size - start - bulk_size)
+        if random_rollover:
+            if not self.is_full:
+                idx_start = np.arange(start, stop)
+                idx_stop = np.random.choice(
+                    start, size=np.maximum(rollover, 0), replace=False
+                )
             else:
-                # get the remaining space of the replay buffer and
-                # whether we need to wrap around
-                remaining_space = self.mem_size - i
-                front = min(remaining_space, bulk_size)
-                back = remaining_space - bulk_size
+                idx_start = np.random.choice(
+                    self.mem_size, size=bulk_size, replace=False
+                )
+                idx_stop = []
 
-                # add stuff to the buffer
-                memory[i : i + front] = thing[:front]
-                if back < 0:
-                    memory[: abs(back)] = thing[back:]
+            print(idx_start)
+            print(idx_stop)
+        else:
+            idx_start = np.arange(start, stop)
+            idx_stop = np.arange(0, rollover)
+        indices = np.append(idx_start, idx_stop).astype(np.int64)
+
+        # put things in memory
+        for memory, thing in zip(self.memory, np_data):
+            memory[indices] = thing
 
         self.count += bulk_size
 
