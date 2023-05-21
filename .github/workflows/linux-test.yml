@@ -19,5 +19,6 @@ jobs:
       - name: Test
         run: |
           pip install -e .
+          pip install torch
           pip install pytest
           pytest -v -rw test/test_replay_buffer.py
