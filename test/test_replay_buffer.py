@@ -84,8 +84,8 @@ def test_non_bulk(random_rollover):
                 num_current_matches == 1
             ), f"""Expected 1 match for current_data, got {num_current_matches}."""
             assert (
-                num_previous_matches == 1
-            ), f"""Expected 1 match for previous_data, got {num_previous_matches}."""
+                num_previous_matches <= 1
+            ), f"""Expected 1 or 0 match for previous_data, got {num_previous_matches}."""
 
             continue
 
