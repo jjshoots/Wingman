@@ -213,6 +213,11 @@ class NeuralBlocks:
                 return nn.BatchNorm2d(num_features)
             else:
                 raise NotImplementedError
+        elif activation == "layer":
+            if dimension == 1:
+                return nn.LayerNorm(num_features)
+            else:
+                raise NotImplementedError
         else:
             raise NotImplementedError
 
