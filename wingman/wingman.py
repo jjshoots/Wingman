@@ -392,6 +392,9 @@ class Wingman:
                     self.version_directory,
                     f"weights{self.mark_number}.pth",
                 )
+                wm_print(
+                    f"Using weights file: {cstr(f'{self.version_directory}/weights{self.mark_number}.pth', 'OKGREEN')}"
+                )
                 return True, self.model_file, self.optim_file
             else:
                 raise ValueError(
