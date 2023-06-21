@@ -113,11 +113,10 @@ class Wingman:
                 "log.txt",
             )
 
-        wm_print("--------------𓆩𓆪--------------", self.log_file)
-        wm_print(f"Using device {cstr(self.device, 'HEADER')}", self.log_file)
+        wm_print("--------------𓆩𓆪--------------")
+        wm_print(f"Using device {cstr(self.device, 'HEADER')}")
         wm_print(
-            f"Saving weights to {cstr(self.version_directory, 'HEADER')}...",
-            self.log_file,
+            f"Saving weights to {cstr(self.version_directory, 'HEADER')}..."
         )
 
         # check to record that we're in a new training session
@@ -129,7 +128,6 @@ class Wingman:
                     "New training instance detected, generating weights directory in 3 seconds...",
                     "WARNING",
                 ),
-                self.log_file,
             )
             time.sleep(3)
             os.makedirs(self.version_directory)
