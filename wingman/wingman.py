@@ -107,6 +107,11 @@ class Wingman:
             self.version_directory,
             "weights-1.pth",
         )
+        if self.log_file:
+            self.log_file = os.path.join(
+                self.version_directory,
+                "log.txt",
+            )
 
         wm_print("--------------𓆩𓆪--------------", self.log_file)
         wm_print(f"Using device {cstr(self.device, 'HEADER')}", self.log_file)
@@ -189,13 +194,7 @@ class Wingman:
                 config["version_number"] = np.random.randint(999999)
 
             # make a logging file if required
-            if config["log_status"]:
-                self.log_file = os.path.join(
-                    self.version_directory,
-                    "log.txt",
-                )
-            else:
-                self.log_file = None
+            self.log_file = config["log_status"]
 
             # add all to argparse
             for item in config:
