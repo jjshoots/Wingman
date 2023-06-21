@@ -32,6 +32,7 @@ def cstr(x: Any, ctype: str) -> str:
 
 
 log_flag = cstr(cstr("wingman", "BOLD"), "OKCYAN")
+ansi_escape = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")
 
 
 def wm_print(x: Any, log_file: str | None = None):
@@ -47,5 +48,5 @@ def wm_print(x: Any, log_file: str | None = None):
         return
 
     with open(log_file, "a") as f:
-        f.write(re.sub(r"\[[0-9;]+[a-zA-Z]", " ", x))
+        f.write(ansi_escape.sub("", x))
         f.write("\n")
