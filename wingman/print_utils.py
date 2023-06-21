@@ -45,5 +45,5 @@ def wm_print(x: Any, log_file: str | None = None):
     if not log_file:
         return
 
-    with open(log_file, "x") as f:
+    with open(log_file, "a") as f:
         f.write(f"{x}\n")
