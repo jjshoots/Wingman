@@ -115,9 +115,7 @@ class Wingman:
 
         wm_print("--------------𓆩𓆪--------------")
         wm_print(f"Using device {cstr(self.device, 'HEADER')}")
-        wm_print(
-            f"Saving weights to {cstr(self.version_directory, 'HEADER')}..."
-        )
+        wm_print(f"Saving weights to {cstr(self.version_directory, 'HEADER')}...")
 
         # check to record that we're in a new training session
         self.fresh_directory = False

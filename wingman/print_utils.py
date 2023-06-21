@@ -1,6 +1,7 @@
 """For fancy printing in Wingman."""
 from __future__ import annotations
 
+import re
 from typing import Any
 
 # colour list
@@ -46,4 +47,5 @@ def wm_print(x: Any, log_file: str | None = None):
         return
 
     with open(log_file, "a") as f:
-        f.write(f"{x}\n")
+        f.write(re.sub(r"\[[0-9;]+[a-zA-Z]", " ", x))
+        f.write("\n")
