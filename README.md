@@ -44,6 +44,7 @@ debug: false
 weights_directory: 'weights'
 version_number: null
 mark_number: 0
+log_status: false
 
 increment: true
 logging_interval: 10
