@@ -1,7 +1,9 @@
 """For fancy printing in Wingman."""
-# colour list
+from __future__ import annotations
+
 from typing import Any
 
+# colour list
 c_colors = {
     "HEADER": "\033[95m",
     "OKBLUE": "\033[94m",
@@ -31,10 +33,17 @@ def cstr(x: Any, ctype: str) -> str:
 log_flag = cstr(cstr("wingman", "BOLD"), "OKCYAN")
 
 
-def wm_print(x: Any):
+def wm_print(x: Any, log_file: str | None = None):
     """Prints out strings decorated with the wingman status.
 
     Args:
-        x (Any): the input string.
+        x (Any): the input string
+        log_file (str): a target path to save the log file if any
     """
     print(f"{log_flag}: {x}")
+
+    if not log_file:
+        return
+
+    with open(log_file, "x") as f:
+        f.write(f"{x}\n")

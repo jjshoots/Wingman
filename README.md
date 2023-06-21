@@ -63,6 +63,7 @@ The parameters described are as follows:
 - `weights_directory`: Where should Wingman point to for model weight saving
 - `version_number`: Wingman versions different models using this number, if this is left as null, Wingman automatically chooses a number.
 - `mark_number`: Wingman checkpoints models using this number if left at 0, automatic checkpoint numbering occurs if the `increment` parameter is set to true.
+- `log_status`: Whether to save a `.txt` log file of Wingman's outputs.
 - `increment`: Whether to increment mark number, if this is set to false, Wingman won't save multiple variations of the same model.
 - `logging_interval`: During training, pass the training step to wingman, and after `logging_interval` steps has passed, Wingman will record the training. If Wingman has found a new lowest point, the model weights will be saved to a new file.
 - `max_skips`: How many logging steps skipped without finding a new lowest point (specified using the `logging_interval` argument) before Wingman will save an intermediary checkpoint of the model.
