@@ -11,7 +11,7 @@ except ImportError as e:
     ) from e
 
 
-def gpuize(input, device) -> torch.Tensor:
+def gpuize(input, device: str = "cuda:0") -> torch.Tensor:
     """gpuize.
 
     Args:
@@ -20,9 +20,9 @@ def gpuize(input, device) -> torch.Tensor:
     """
     if torch.is_tensor(input):
         if input.device == device:
-            return input.float()
-        return input.to(device).float()
-    return torch.tensor(input).float().to(device)
+            return input
+        return input.to(device)
+    return torch.tensor(input).to(device)
 
 
 def cpuize(input) -> np.ndarray:
