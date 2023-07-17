@@ -11,15 +11,14 @@ except ImportError as e:
     ) from e
 
 
-def gpuize(input, device: str = "cuda:0", keeptype: bool = False) -> torch.Tensor:
+def gpuize(input, device: str = "cuda:0", dtype: torch.dtype = torch.float32) -> torch.Tensor:
     """gpuize.
 
     Args:
         input: the array that we want to gpuize
         device: a string of the device we want to move the thing to
-        keeptype: a boolean on whether to keep the original dtype, otherwise, the tensor is converted to torch.float64
+        dtype: the datatype that the returned tensor should be
     """
-    dtype = input.dtype if keeptype else torch.float64
     return input.to(device, dtype=dtype)
 
 
