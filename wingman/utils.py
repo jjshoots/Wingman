@@ -11,7 +11,9 @@ except ImportError as e:
     ) from e
 
 
-def gpuize(input, device: str = "cuda:0", dtype: torch.dtype = torch.float32) -> torch.Tensor:
+def gpuize(
+    input, device: str = "cuda:0", dtype: torch.dtype = torch.float32
+) -> torch.Tensor:
     """gpuize.
 
     Args:
@@ -19,7 +21,10 @@ def gpuize(input, device: str = "cuda:0", dtype: torch.dtype = torch.float32) ->
         device: a string of the device we want to move the thing to
         dtype: the datatype that the returned tensor should be
     """
-    return input.to(device, dtype=dtype)
+    if torch.is_tensor(input):
+        return input.to(device=device, dtype=dtype)
+    else:
+        return torch.tensor(input, device=device, dtype=dtype)
 
 
 def cpuize(input) -> np.ndarray:
