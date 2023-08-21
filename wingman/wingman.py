@@ -52,19 +52,17 @@ class Wingman:
         self,
         config_yaml: str,
         experiment_description: str = "",
-        cli_prefix: str = "",
     ):
         """__init__.
 
         Args:
             config_yaml (str): location of where the config yaml is described
             experiment_description (str): optional description of the experiment
-            cli_prefix (str): prefix for all commandline argument options
         """
         # save our experiment description
         self.config_yaml = config_yaml
         self.experiment_description = experiment_description
-        self.cfg = self.__yaml_to_args(cli_prefix)
+        self.cfg = self.__yaml_to_args()
 
         # make sure that logging_interval is positive
         assert (
@@ -156,15 +154,8 @@ class Wingman:
 
         return self.device
 
-    def __yaml_to_args(self, cli_prefix: str):
-        """Reads the yaml file provided at init and converts it to commandline arguments.
-
-        Args:
-            cli_prefix (str): prefix for all commandline argument options
-        """
-        # handle the prefix
-        cli_prefix = f"{cli_prefix}_" if len(cli_prefix) > 0 else ""
-
+    def __yaml_to_args(self):
+        """Reads the yaml file provided at init and converts it to commandline arguments."""
         # parse the arguments
         parser = argparse.ArgumentParser(description=self.experiment_description)
 
@@ -205,7 +196,7 @@ class Wingman:
             # add all to argparse
             for item in config:
                 parser.add_argument(
-                    f"--{cli_prefix}{item}",
+                    f"--{item}",
                     type=type(config[item]),
                     nargs="?",
                     const=True,
