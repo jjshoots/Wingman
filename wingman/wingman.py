@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import math
 import os
+import shutil
 import time
 from typing import Tuple
 
@@ -51,17 +52,19 @@ class Wingman:
         self,
         config_yaml: str,
         experiment_description: str = "",
+        cli_prefix: str = "",
     ):
         """__init__.
 
         Args:
             config_yaml (str): location of where the config yaml is described
             experiment_description (str): optional description of the experiment
+            cli_prefix (str): prefix for all commandline argument options
         """
         # save our experiment description
         self.config_yaml = config_yaml
         self.experiment_description = experiment_description
-        self.cfg = self.__yaml_to_args()
+        self.cfg = self.__yaml_to_args(cli_prefix)
 
         # make sure that logging_interval is positive
         assert (
@@ -117,7 +120,7 @@ class Wingman:
         wm_print(f"Using device {cstr(self.device, 'HEADER')}")
         wm_print(f"Saving weights to {cstr(self.version_directory, 'HEADER')}...")
 
-        # check to record that we're in a new training session
+        # check to record that we're in a new training session and save the config file
         self.fresh_directory = False
         if not os.path.isdir(self.version_directory):
             self.fresh_directory = True
@@ -129,6 +132,10 @@ class Wingman:
             )
             time.sleep(3)
             os.makedirs(self.version_directory)
+            shutil.copyfile(
+                self.config_yaml,
+                os.path.join(self.version_directory, "config_copy.yaml"),
+            )
 
     def __get_device(self):
         """__get_device."""
@@ -149,12 +156,15 @@ class Wingman:
 
         return self.device
 
-    def __yaml_to_args(self):
-        """__yaml_to_args.
+    def __yaml_to_args(self, cli_prefix: str):
+        """Reads the yaml file provided at init and converts it to commandline arguments.
 
-        Reads the yaml file provided at init and converts it to commandline arguments.
-
+        Args:
+            cli_prefix (str): prefix for all commandline argument options
         """
+        # handle the prefix
+        cli_prefix = f"{cli_prefix}_" if len(cli_prefix) > 0 else ""
+
         # parse the arguments
         parser = argparse.ArgumentParser(description=self.experiment_description)
 
@@ -195,7 +205,7 @@ class Wingman:
             # add all to argparse
             for item in config:
                 parser.add_argument(
-                    f"--{item}",
+                    f"--{cli_prefix}{item}",
                     type=type(config[item]),
                     nargs="?",
                     const=True,
