@@ -58,3 +58,6 @@ repos:
         pass_filenames: false
         types: [python]
         additional_dependencies: ["pyright"]
+        reportMissingImports: false
+        args:
+          - --project=pyproject.toml
