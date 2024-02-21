@@ -10,9 +10,13 @@ except ImportError as e:
         "Could not import torch, this is not bundled as part of Wingman and has to be installed manually."
     ) from e
 
+__device = "cpu"
+__device = "mps" if torch.cuda.is_available() else __device
+__device = "cuda:0" if torch.backends.mps.is_available() else __device
+
 
 def gpuize(
-    input, device: str = "cuda:0", dtype: torch.dtype = torch.float32
+    input, device: str = __device, dtype: torch.dtype = torch.float32
 ) -> torch.Tensor:
     """gpuize.
 

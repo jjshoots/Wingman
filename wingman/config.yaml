@@ -1,4 +1,5 @@
 # wingman required params
+# https://github.com/jjshoots/Wingman?tab=readme-ov-file#from-wingman-import-wingman
 debug: false
 
 weights_directory: 'weights'

@@ -144,8 +144,10 @@ class Wingman:
 
             if torch.cuda.is_available():
                 self.device = torch.device("cuda:0")
+            elif torch.backends.mps.is_available():
+                self.device = torch.device("mps")
             else:
-                self.device = "cpu"
+                self.device = torch.device("cpu")
         except ImportError:
             warn(
                 "Could not import torch, this is not bundled as part of Wingman and has to be installed manually."

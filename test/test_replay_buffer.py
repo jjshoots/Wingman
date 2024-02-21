@@ -4,7 +4,7 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
-from wingman import ReplayBuffer
+from wingman.replay_buffer import ReplayBuffer
 
 
 def is_equivalent_tuple(item1, item2):
