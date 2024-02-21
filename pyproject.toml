@@ -36,7 +36,6 @@ wingman-compress-weights = "wingman:compress_weights"
 [tool.setuptools.package-data]
 wingman = ["*.yaml"]
 
-[tool.pyright]
-# This is required as the CI pre-commit does not download the module (i.e. numpy, pygame, box2d)
-#   Therefore, we have to ignore missing imports
-reportMissingImports = "none"
+[tool.ruff.lint]
+# pyflakes, pycodestyle, isort
+select = ["E4", "E7", "E9", "F", "I"]
