@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jj_wingman"
-version = "0.6.0"
+version = "0.7.0"
 authors = [
   { name="Jet", email="taijunjet@hotmail.com" },
 ]
@@ -27,8 +27,8 @@ include-package-data = true
 include = ["wingman", "wingman.*"]
 
 [project.scripts]
-wingman-generate-yaml = "wingman:generate_yaml"
-wingman-compress-weights = "wingman:compress_weights"
+wingman-generate-yaml = "wingman:cli_scripts.generate_yaml"
+wingman-compress-weights = "wingman:cli_scripts.compress_weights"
 
 [project.urls]
 "Homepage" = "https://github.com/jjshoots/Wingman"
