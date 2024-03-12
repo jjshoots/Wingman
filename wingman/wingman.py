@@ -1,6 +1,7 @@
 """The core of Wingman."""
 from __future__ import annotations
 
+from pathlib import Path
 import argparse
 import math
 import os
@@ -50,7 +51,7 @@ class Wingman:
 
     def __init__(
         self,
-        config_yaml: str,
+        config_yaml: str | Path,
         experiment_description: str = "",
     ):
         """__init__.
@@ -81,7 +82,6 @@ class Wingman:
         self.skips = 0
 
         # weight file variables
-        self.directory = os.path.dirname(__file__)
         self.version_number = self.cfg.version_number
         self.mark_number = self.cfg.mark_number
         self.previous_mark_number = -1
