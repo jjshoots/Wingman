@@ -61,7 +61,7 @@ class Wingman:
             experiment_description (str): optional description of the experiment
         """
         # save our experiment description
-        self.config_yaml = config_yaml
+        self.config_yaml: Path = Path(config_yaml)
         self.experiment_description = experiment_description
         self.cfg = self.__yaml_to_args()
 
@@ -87,32 +87,17 @@ class Wingman:
         self.previous_mark_number = -1
 
         # directory itself
-        self.version_directory = os.path.join(
-            self.cfg.weights_directory, f"Version{self.version_number}"
+        self.version_directory = (
+            Path(self.cfg.weights_directory) / f"Version{self.version_number}"
         )
 
         # file paths
-        self.model_file = os.path.join(
-            self.version_directory,
-            f"weights{self.mark_number}.pth",
-        )
-        self.optim_file = os.path.join(
-            self.version_directory,
-            "optimizer.pth",
-        )
-        self.status_file = os.path.join(
-            self.version_directory,
-            "lowest_loss.npy",
-        )
-        self.intermediary_file = os.path.join(
-            self.version_directory,
-            "weights-1.pth",
-        )
+        self.model_file = self.version_directory / f"weights{self.mark_number}.path"
+        self.optim_file = self.version_directory / "optimizer_path"
+        self.status_file = self.version_directory / "lowest_loss.npy"
+        self.intermediary_file = self.version_directory / "weights-1.npy"
         if self.log_file:
-            self.log_file = os.path.join(
-                self.version_directory,
-                "log.txt",
-            )
+            self.log_file = self.version_directory / "log.txt"
 
         wm_print("--------------𓆩𓆪--------------")
         wm_print(f"Using device {cstr(self.device, 'HEADER')}")
@@ -120,7 +105,7 @@ class Wingman:
 
         # check to record that we're in a new training session and save the config file
         self.fresh_directory = False
-        if not os.path.isdir(self.version_directory):
+        if not self.version_directory.is_dir():
             self.fresh_directory = True
             wm_print(
                 cstr(
@@ -129,10 +114,10 @@ class Wingman:
                 ),
             )
             time.sleep(3)
-            os.makedirs(self.version_directory)
+            self.version_directory.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(
                 self.config_yaml,
-                os.path.join(self.version_directory, "config_copy.yaml"),
+                self.version_directory / "config_copy.yaml",
             )
 
     def __get_device(self):
@@ -242,7 +227,9 @@ class Wingman:
 
         return cfg
 
-    def checkpoint(self, loss: float, step: int | None = None) -> Tuple[bool, str, str]:
+    def checkpoint(
+        self, loss: float, step: int | None = None
+    ) -> Tuple[bool, Path, Path]:
         """checkpoint.
 
         Records training every logging_interval steps.
@@ -257,7 +244,7 @@ class Wingman:
             step (int | None): step number, automatically incremented if None
 
         Returns:
-            Tuple[bool, str, str]: to_update, weights_file, optim_file
+            Tuple[bool, Path, Path]: to_update, weights_file, optim_file
         """
         # if step is None, we automatically increment
         if step is None:
@@ -323,11 +310,10 @@ class Wingman:
         # increment means return the files with incremented mark number
         if self.cfg.increment:
             # check if we are safe to increment mark numbers and regenerate weights file
-            if self.previous_mark_number == -1 or os.path.isfile(self.model_file):
+            if self.previous_mark_number == -1 or self.model_file.exists():
                 self.previous_mark_number = self.mark_number
-                self.model_file = os.path.join(
-                    self.version_directory,
-                    f"weights{self.mark_number}.pth",
+                self.model_file = (
+                    self.version_directory / f"weights{self.mark_number}.pth"
                 )
                 self.mark_number += 1
 
@@ -383,11 +369,11 @@ class Wingman:
             None:
         """
         assert len(data.shape) == 1, "Data must be only 1 dimensional ndarray"
-        filename = os.path.join(self.version_directory, f"{variable_name}.csv")
+        filename = self.version_directory / f"{variable_name}.csv"
         with open(filename, "ab") as f:
             np.savetxt(f, [data], delimiter=",", fmt=precision)
 
-    def get_weight_files(self, latest: bool = True) -> Tuple[bool, str, str]:
+    def get_weight_files(self, latest: bool = True) -> Tuple[bool, Path, Path]:
         """get_weight_files.
 
         Returns three things:
@@ -399,14 +385,13 @@ class Wingman:
             latest (bool): whether we want the latest file or the one determined by `mark_number`
 
         Returns:
-            Tuple[bool, str, str]: have_file, weights_file, optim_file
+            Tuple[bool, Path, Path]: have_file, weights_file, optim_file
         """
         # if we don't need the latest file, get the one specified
         if not latest:
             if os.path.isfile(self.model_file):
-                self.model_file = os.path.join(
-                    self.version_directory,
-                    f"weights{self.mark_number}.pth",
+                self.model_file = (
+                    self.version_directory / f"weights{self.mark_number}.pth"
                 )
                 wm_print(
                     f"Using weights file: {cstr(f'{self.version_directory}/weights{self.mark_number}.pth', 'OKGREEN')}",
@@ -423,22 +408,16 @@ class Wingman:
 
         # while the file exists, try to look for a file one version later
         self.mark_number = 0
-        while os.path.isfile(self.model_file):
+        while self.model_file.is_file():
             self.mark_number += 1
-            self.model_file = os.path.join(
-                self.version_directory,
-                f"weights{self.mark_number}.pth",
-            )
+            self.model_file = self.version_directory / f"weights{self.mark_number}.pth"
 
         # once the file version doesn't exist, decrement by one and use that file
         self.mark_number = max(self.mark_number - 1, 0)
-        self.model_file = os.path.join(
-            self.version_directory,
-            f"weights{self.mark_number}.pth",
-        )
+        self.model_file = self.version_directory / f"weights{self.mark_number}.pth"
 
         # if the file doesn't exist, notify and ignore
-        if not os.path.isfile(self.model_file):
+        if not self.model_file.is_file():
             if not self.fresh_directory:
                 wm_print(
                     cstr(

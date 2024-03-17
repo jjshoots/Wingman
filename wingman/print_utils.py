@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import Any
 
 # colour list
@@ -35,7 +36,7 @@ log_flag = cstr(cstr("wingman", "BOLD"), "OKCYAN")
 ansi_escape = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")
 
 
-def wm_print(x: Any, log_file: str | bool = False):
+def wm_print(x: Any, log_file: Path | str | bool = False):
     """Prints out strings decorated with the wingman status.
 
     Args:
