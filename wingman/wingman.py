@@ -82,30 +82,28 @@ class Wingman:
         self.skips = 0
 
         # weight file variables
-        self.version_number = self.cfg.version_number
-        self.mark_number = self.cfg.mark_number
-        self.previous_mark_number = -1
+        self.model_id = self.cfg.model_id
+        self.ckpt_number = self.cfg.ckpt_number
+        self.previous_checkpoint_number = -1
 
         # directory itself
-        self.version_directory = (
-            Path(self.cfg.weights_directory) / f"Version{self.version_number}"
-        )
+        self.model_directory = Path(self.cfg.save_directory) / str(self.model_id)
 
         # file paths
-        self.model_file = self.version_directory / f"weights{self.mark_number}.path"
-        self.optim_file = self.version_directory / "optimizer_path"
-        self.status_file = self.version_directory / "lowest_loss.npy"
-        self.intermediary_file = self.version_directory / "weights-1.npy"
+        self.model_file = self.model_directory / f"weights{self.ckpt_number}.path"
+        self.optim_file = self.model_directory / "optimizer_path"
+        self.status_file = self.model_directory / "lowest_loss.npy"
+        self.intermediary_file = self.model_directory / "weights-1.npy"
         if self.log_file:
-            self.log_file = self.version_directory / "log.txt"
+            self.log_file = self.model_directory / "log.txt"
 
         wm_print("--------------𓆩𓆪--------------")
         wm_print(f"Using device {cstr(self.device, 'HEADER')}")
-        wm_print(f"Saving weights to {cstr(self.version_directory, 'HEADER')}...")
+        wm_print(f"Saving weights to {cstr(self.model_directory, 'HEADER')}...")
 
         # check to record that we're in a new training session and save the config file
         self.fresh_directory = False
-        if not self.version_directory.is_dir():
+        if not self.model_directory.is_dir():
             self.fresh_directory = True
             wm_print(
                 cstr(
@@ -114,10 +112,10 @@ class Wingman:
                 ),
             )
             time.sleep(3)
-            self.version_directory.mkdir(parents=True, exist_ok=True)
+            self.model_directory.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(
                 self.config_yaml,
-                self.version_directory / "config_copy.yaml",
+                self.model_directory / "config_copy.yaml",
             )
 
     def __get_device(self):
@@ -151,11 +149,11 @@ class Wingman:
             config = yaml.load(f, Loader=yaml.FullLoader)
 
             # checks that we have the default params in the file
-            assertation_list = [
+            assertion_list = [
                 "debug",
-                "weights_directory",
-                "version_number",
-                "mark_number",
+                "save_directory",
+                "model_id",
+                "ckpt_number",
                 "log_status",
                 "increment",
                 "logging_interval",
@@ -168,14 +166,14 @@ class Wingman:
                 "wandb_entity",
                 "wandb_project",
             ]
-            for item in assertation_list:
+            for item in assertion_list:
                 assert item in config, cstr(
                     f"Missing parameter {item} in config file.", "FAIL"
                 )
 
-            # override version number if needed
-            if config["version_number"] is None:
-                config["version_number"] = np.random.randint(999999)
+            # override model_id if needed
+            if config["model_id"] is None:
+                config["model_id"] = np.random.randint(999999)
 
             # make a logging file if required
             self.log_file = config["log_status"]
@@ -197,10 +195,8 @@ class Wingman:
         # add the gpu
         config["device"] = self.__get_device()
 
-        # change the version if debugging
-        config["version_number"] = (
-            "Debug" if config["debug"] else str(config["version_number"])
-        )
+        # change the model_id if debugging
+        config["model_id"] = "Debug" if config["debug"] else str(config["model_id"])
 
         # cfg depending on whether wandb is enabled
         cfg = None
@@ -209,9 +205,9 @@ class Wingman:
                 project=config["wandb_project"],
                 entity=config["wandb_entity"],
                 config=config,
-                name=config["wandb_name"] + ", v=" + config["version_number"]
+                name=config["wandb_name"] + ", v=" + config["model_id"]
                 if config["wandb_name"] != ""
-                else config["version_number"],
+                else config["model_id"],
                 notes=config["wandb_notes"],
                 id=config["wandb_id"] if config["wandb_id"] != "" else None,
             )
@@ -236,8 +232,8 @@ class Wingman:
 
         Returns three things:
         - indicator on whether we should save weights
-        - directory of where the weight files should be saved
-        - directory of where the optim files should be saved
+        - path of where the weight files should be saved
+        - path of where the optim files should be saved
 
         Args:
             loss (float): learning loss of the model as a detached float
@@ -307,25 +303,25 @@ class Wingman:
         self.lowest_loss = avg_loss
         self.skips = 0
 
-        # increment means return the files with incremented mark number
+        # increment means return the files with incremented checkpoint number
         if self.cfg.increment:
-            # check if we are safe to increment mark numbers and regenerate weights file
-            if self.previous_mark_number == -1 or self.model_file.exists():
-                self.previous_mark_number = self.mark_number
+            # check if we are safe to increment checkpoint numbers and regenerate weights file
+            if self.previous_checkpoint_number == -1 or self.model_file.exists():
+                self.previous_checkpoint_number = self.ckpt_number
                 self.model_file = (
-                    self.version_directory / f"weights{self.mark_number}.pth"
+                    self.model_directory / f"weights{self.ckpt_number}.pth"
                 )
-                self.mark_number += 1
+                self.ckpt_number += 1
 
             else:
                 wm_print(
                     cstr(
-                        "Didn't save weights file for the previous mark number (self.mark_number), not incrementing mark number.",
+                        "Didn't save weights file for the previous checkpoint number (self.ckpt_number), not incrementing checkpoint number.",
                         "WARNING",
                     ),
                     self.log_file,
                 )
-                self.mark_number = self.previous_mark_number
+                self.ckpt_number = self.previous_checkpoint_number
 
         # record the lowest running loss in the status file
         np.save(self.status_file, self.lowest_loss)
@@ -369,7 +365,7 @@ class Wingman:
             None:
         """
         assert len(data.shape) == 1, "Data must be only 1 dimensional ndarray"
-        filename = self.version_directory / f"{variable_name}.csv"
+        filename = self.model_directory / f"{variable_name}.csv"
         with open(filename, "ab") as f:
             np.savetxt(f, [data], delimiter=",", fmt=precision)
 
@@ -382,7 +378,7 @@ class Wingman:
         - directory of where the optim files are
 
         Args:
-            latest (bool): whether we want the latest file or the one determined by `mark_number`
+            latest (bool): whether we want the latest file or the one determined by `ckpt_number`
 
         Returns:
             Tuple[bool, Path, Path]: have_file, weights_file, optim_file
@@ -391,30 +387,30 @@ class Wingman:
         if not latest:
             if os.path.isfile(self.model_file):
                 self.model_file = (
-                    self.version_directory / f"weights{self.mark_number}.pth"
+                    self.model_directory / f"weights{self.ckpt_number}.pth"
                 )
                 wm_print(
-                    f"Using weights file: {cstr(f'{self.version_directory}/weights{self.mark_number}.pth', 'OKGREEN')}",
+                    f"Using weights file: {cstr(f'{self.model_directory}/weights{self.ckpt_number}.pth', 'OKGREEN')}",
                     self.log_file,
                 )
                 return True, self.model_file, self.optim_file
             else:
                 raise ValueError(
                     cstr(
-                        f"Mark number {self.mark_number} was requested, but it doesn't exist.",
+                        f"Checkpoint number {self.ckpt_number} was requested, but it doesn't exist.",
                         "FAIL",
                     )
                 )
 
-        # while the file exists, try to look for a file one version later
-        self.mark_number = 0
+        # while the file exists, try to look for a file one checkpoint later
+        self.ckpt_number = 0
         while self.model_file.is_file():
-            self.mark_number += 1
-            self.model_file = self.version_directory / f"weights{self.mark_number}.pth"
+            self.ckpt_number += 1
+            self.model_file = self.model_directory / f"weights{self.ckpt_number}.pth"
 
-        # once the file version doesn't exist, decrement by one and use that file
-        self.mark_number = max(self.mark_number - 1, 0)
-        self.model_file = self.version_directory / f"weights{self.mark_number}.pth"
+        # once the checkpoint doesn't exist, decrement by one and use that file
+        self.ckpt_number = max(self.ckpt_number - 1, 0)
+        self.model_file = self.model_directory / f"weights{self.ckpt_number}.pth"
 
         # if the file doesn't exist, notify and ignore
         if not self.model_file.is_file():
@@ -434,7 +430,7 @@ class Wingman:
             self.lowest_loss = np.load(self.status_file).item()
 
             wm_print(
-                f"Using weights file: {cstr(f'{self.version_directory}/weights{self.mark_number}.pth', 'OKGREEN')}",
+                f"Using weights file: {cstr(f'{self.model_directory}/weights{self.ckpt_number}.pth', 'OKGREEN')}",
                 self.log_file,
             )
             wm_print(

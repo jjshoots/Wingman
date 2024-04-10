@@ -41,9 +41,9 @@ A bare minimum yaml file is as follows:
 # wingman required params
 debug: false
 
-weights_directory: 'weights'
-version_number: null
-mark_number: 0
+save_directory: 'weights'
+model_id: null
+ckpt_number: 0
 log_status: false
 
 increment: true
@@ -61,11 +61,11 @@ wandb_project: 'my_new_project'
 
 The parameters described are as follows:
 - `debug`: Whether to set the model to debug mode
-- `weights_directory`: Where should Wingman point to for model weight saving
-- `version_number`: Wingman versions different models using this number, if this is left as null, Wingman automatically chooses a number.
-- `mark_number`: Wingman checkpoints models using this number if left at 0, automatic checkpoint numbering occurs if the `increment` parameter is set to true.
+- `save_directory`: Where should Wingman point to for model weight saving
+- `model_id`: Wingman records the model under this ID, if this is left as null, Wingman automatically chooses a number.
+- `model_num`: Wingman checkpoints models using this number if left at 0, automatic checkpoint numbering occurs if the `increment` parameter is set to true.
 - `log_status`: Whether to save a `.txt` log file of Wingman's outputs.
-- `increment`: Whether to increment mark number, if this is set to false, Wingman won't save multiple variations of the same model.
+- `increment`: Whether to increment checkpoint number, if this is set to false, Wingman won't save multiple variations of the same model.
 - `logging_interval`: During training, pass the training step to wingman, and after `logging_interval` steps has passed, Wingman will record the training. If Wingman has found a new lowest point, the model weights will be saved to a new file.
 - `max_skips`: How many logging steps skipped without finding a new lowest point (specified using the `logging_interval` argument) before Wingman will save an intermediary checkpoint of the model.
 - `greater_than`: You can tell Wingman to only checkpoint the model when the previous checkpointed loss is more than the current loss by this value.
@@ -98,9 +98,9 @@ After defining your `config.yaml` file, the basic usage of Wingman is as follows
     optim = optimizer.AdamW(model.parameters(), lr=cfg.YOUR_LEARNING_RATE_PARAM, amsgrad=True)
 
     # we can check if we have trained this model before, and if we have, just load it
-    # this checking is done using the `version_number` param, if `latest=True` is set,
+    # this checking is done using the `model_id` param, if `latest=True` is set,
     # Wingman automatically searches for the latest model checkpoint,
-    # otherwise, Wingman uses the checkpoint specified by `mark_number`
+    # otherwise, Wingman uses the checkpoint specified by `ckpt_number`
     have_file, weight_file, optim_file = wm.get_weight_files(latest=True)
     if have_file:
         # Wingman simply returns a string of where the weight files are
@@ -134,7 +134,7 @@ After defining your `config.yaml` file, the basic usage of Wingman is as follows
 #### Weights Directory Compression
 
 If you train a lot of models, the weights directory can start to use a lot of disk space.
-Running `wingman-compress-weights [optional directory name]` on the commandline will remove all redundant mark numbers and delete all empty files.
+Running `wingman-compress-weights [optional directory name]` on the commandline will remove all redundant checkpoint numbers and delete all empty directories.
 
 
 <br>
@@ -270,10 +270,10 @@ while env.done is False:
     act = policy(obs)
 
     # sample a new transition
-    next_obs, rew, dne, next_lbl = env.step(act)
+    next_obs, rew, done, next_lbl = env.step(act)
 
     # store stuff in the replay buffer
-    memory.push((obs, act, rew, next_obs, dne))
+    memory.push((obs, act, rew, next_obs, done))
 
 # perform training using the buffer
 dataloader = torch.utils.data.DataLoader(

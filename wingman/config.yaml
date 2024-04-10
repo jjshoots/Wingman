@@ -2,9 +2,9 @@
 # https://github.com/jjshoots/Wingman?tab=readme-ov-file#from-wingman-import-wingman
 debug: false
 
-weights_directory: 'weights'
-version_number: null
-mark_number: 0
+save_directory: 'weights'
+model_id: null
+ckpt_number: 0
 log_status: false
 
 increment: true
