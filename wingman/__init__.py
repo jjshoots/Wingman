@@ -1,6 +1,6 @@
 # ruff: noqa: F401
-from .wingman import Wingman
 from .utils import WingmanException
+from .wingman import Wingman
 
 try:
     import torch as _

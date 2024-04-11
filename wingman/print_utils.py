@@ -19,7 +19,12 @@ c_colors = {
 end_c = "\033[0m"
 
 
-def cstr(x: Any, ctype: Literal["HEADER", "OKBLUE", "OKCYAN", "OKGREEN", "WARNING", "FAIL", "BOLD", "UNDERLINE"]) -> str:
+def cstr(
+    x: Any,
+    ctype: Literal[
+        "HEADER", "OKBLUE", "OKCYAN", "OKGREEN", "WARNING", "FAIL", "BOLD", "UNDERLINE"
+    ],
+) -> str:
     """Makes a string colourful.
 
     Args:

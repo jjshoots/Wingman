@@ -13,6 +13,8 @@ import numpy as np
 import wandb
 import yaml
 
+from wingman.utils import WingmanException
+
 from .print_utils import cstr, wm_print
 
 
@@ -66,9 +68,13 @@ class Wingman:
         self.cfg = self.__yaml_to_args()
 
         # make sure that logging_interval is positive
-        assert (
-            self.cfg.logging_interval > 0
-        ), f"logging_interval must be a positive number, got {self.cfg.logging_interval}."
+        if self.cfg.logging_interval <= 0:
+            raise WingmanException(
+                cstr(
+                    f"logging_interval must be a positive number, got {self.cfg.logging_interval}.",
+                    "FAIL",
+                )
+            )
 
         # the logger
         self.log = dict()
@@ -166,9 +172,10 @@ class Wingman:
                 "wandb_entity",
                 "wandb_project",
             ]
-            for item in assertion_list:
-                assert item in config, cstr(
-                    f"Missing parameter {item} in config file.", "FAIL"
+            missing_set = set(assertion_list) - set(config.keys())
+            if missing_set:
+                raise WingmanException(
+                    cstr(f"Missing parameters {missing_set} in config file.", "FAIL")
                 )
 
             # override model_id if needed
@@ -247,10 +254,13 @@ class Wingman:
             step = self.previous_checkpoint_step + 1
 
         # check that our step didn't go in reverse
-        assert step >= self.previous_checkpoint_step, cstr(
-            f"We can't step backwards! Got step {step} but the previous logging step was {self.previous_checkpoint_step}.",
-            "FAIL",
-        )
+        if step < self.previous_checkpoint_step:
+            raise WingmanException(
+                cstr(
+                    f"We can't step backwards! Got step {step} but the previous logging step was {self.previous_checkpoint_step}.",
+                    "FAIL",
+                )
+            )
         self.previous_checkpoint_step = step
 
         """ACCUMULATE LOSS"""
@@ -345,9 +355,10 @@ class Wingman:
         Returns:
             None:
         """
-        assert isinstance(self.log, dict), cstr(
-            f"log must be dictionary, currently it is {self.log}.", "FAIL"
-        )
+        if not isinstance(self.log, dict):
+            raise WingmanException(
+                cstr(f"log must be dictionary, currently it is {self.log}.", "FAIL")
+            )
         if self.cfg.wandb:
             wandb.log(self.log)
 
@@ -364,7 +375,10 @@ class Wingman:
         Returns:
             None:
         """
-        assert len(data.shape) == 1, "Data must be only 1 dimensional ndarray"
+        if not len(data.shape) == 1:
+            raise WingmanException(
+                cstr("Data must be only 1 dimensional ndarray", "FAIL")
+            )
         filename = self.model_directory / f"{variable_name}.csv"
         with open(filename, "ab") as f:
             np.savetxt(f, [data], delimiter=",", fmt=precision)
