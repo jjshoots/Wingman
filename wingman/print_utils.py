@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 # colour list
 c_colors = {
@@ -19,7 +19,7 @@ c_colors = {
 end_c = "\033[0m"
 
 
-def cstr(x: Any, ctype: str) -> str:
+def cstr(x: Any, ctype: Literal["HEADER", "OKBLUE", "OKCYAN", "OKGREEN", "WARNING", "FAIL", "BOLD", "UNDERLINE"]) -> str:
     """Makes a string colourful.
 
     Args:

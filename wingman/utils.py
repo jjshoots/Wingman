@@ -15,6 +15,19 @@ __device = "mps" if torch.cuda.is_available() else __device
 __device = "cuda:0" if torch.backends.mps.is_available() else __device
 
 
+class WingmanException(Exception):
+    """WingmanException."""
+
+    def __init__(self, message: str = ""):
+        """__init__.
+
+        Args:
+            message (str): the message
+        """
+        super().__init__(message)
+        self.message = message
+
+
 def gpuize(
     input, device: str = __device, dtype: torch.dtype = torch.float32
 ) -> torch.Tensor:
