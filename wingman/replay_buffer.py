@@ -5,6 +5,8 @@ from typing import Any, Sequence
 
 import numpy as np
 
+from wingman.exceptions import ReplayBufferException
+
 try:
     from torch.utils.data import Dataset
 except ImportError as e:
@@ -83,22 +85,27 @@ class ReplayBuffer(Dataset):
         # check if we are bulk adding things in and assert lengths
         bulk_size = 1
         if bulk:
-            assert all([isinstance(d, np.ndarray) for d in data]), cstr(
-                "All things must be np.ndarray for bulk data.", "FAIL"
-            )
+            # assert all things are numpy array
+            if not all([isinstance(d, np.ndarray) for d in data]):
+                raise ReplayBufferException(
+                    "All things must be np.ndarray for bulk data. "
+                    f"Got {[type(d) for d in data]}."
+                )
 
             bulk_size = data[0].shape[0]  # pyright: ignore
 
-            assert all([len(d) == bulk_size for d in data]), cstr(  # pyright: ignore
-                f"All things in data must have same len for the first dimension for bulk data. Received data with {[len(d) for d in data]} items respectively.",  # pyright: ignore
-                "FAIL",
-            )
+            # assert all items have same length
+            if not all([len(d) == bulk_size for d in data]):  # pyright: ignore[reportArgumentType]
+                raise ReplayBufferException(
+                    "All things in data must have same len for the first dimension for bulk data. "
+                    f"Received data with {[len(d) for d in data]} items respectively.",  # pyright: ignore[reportArgumentType]
+                )
 
             # assert on memory lengths
-            assert self.mem_size >= bulk_size, cstr(
-                f"Bulk size ({bulk_size}) should be less than or equal to memory size ({self.mem_size}).",
-                "FAIL",
-            )
+            if self.mem_size < bulk_size:
+                raise ReplayBufferException(
+                    f"Bulk size ({bulk_size}) should be less than or equal to memory size ({self.mem_size}).",
+                )
 
         np_data = list(map(lambda x: self.__ensure_dims(x, bulk), data))
 
@@ -121,10 +128,11 @@ class ReplayBuffer(Dataset):
             )
 
         # assert that the number of lists in memory is same as data to push
-        assert len(np_data) == len(self.memory), cstr(
-            f"Data length not similar to memory buffer length. Replay buffer has {len(self.memory)} items, but received {len(np_data)} items.",
-            "FAIL",
-        )
+        if len(np_data) != len(self.memory):
+            raise ReplayBufferException(
+                f"Data length not similar to memory buffer length. Replay buffer has {len(self.memory)} items. "
+                f"But received {len(np_data)} items.",
+            )
 
         # indexing for memory positions
         start = self.count % self.mem_size

@@ -1,6 +1,8 @@
 """Easy creation of neural networks."""
 from typing import List, Optional
 
+from wingman.exceptions import NeuralBlocksException
+
 try:
     import torch.nn as nn
 except ImportError as e:
@@ -246,11 +248,14 @@ class NeuralBlocks:
         """
         network_depth = len(channels_description) - 1
 
-        assert (
-            network_depth == len(kernels_description)
-            and network_depth == len(activation_description)
-            and network_depth == len(pooling_description)
-        ), "All network descriptions must be of the same size"
+        if (
+            network_depth != len(kernels_description)
+            or network_depth != len(activation_description)
+            or network_depth != len(pooling_description)
+        ):
+            raise NeuralBlocksException(
+                "All network descriptions must be of the same size"
+            )
 
         module_list = []
         for i in range(network_depth):
@@ -293,12 +298,15 @@ class NeuralBlocks:
         """
         network_depth = len(channels_description) - 1
 
-        assert (
-            network_depth == len(kernels_description)
-            and network_depth == len(activation_description)
-            and network_depth == len(padding_description)
-            and network_depth == len(stride_description)
-        ), "All network descriptions must be of the same size"
+        if (
+            network_depth != len(kernels_description)
+            or network_depth != len(activation_description)
+            or network_depth != len(padding_description)
+            or network_depth != len(stride_description)
+        ):
+            raise NeuralBlocksException(
+                "All network descriptions must be of the same size"
+            )
 
         module_list = []
         for i in range(network_depth):
@@ -337,9 +345,10 @@ class NeuralBlocks:
         """
         network_depth = len(features_description) - 1
 
-        assert network_depth == len(
-            activation_description
-        ), "All network descriptions must be of the same size"
+        if network_depth != len(activation_description):
+            raise NeuralBlocksException(
+                f"All network descriptions must be of the same size, got {network_depth} for `network_depth` and {activation_description} for `activation_description`."
+            )
 
         module_list = []
         for i in range(network_depth):

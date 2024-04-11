@@ -13,7 +13,7 @@ import numpy as np
 import wandb
 import yaml
 
-from wingman.utils import WingmanException
+from wingman.exceptions import WingmanException
 
 from .print_utils import cstr, wm_print
 
