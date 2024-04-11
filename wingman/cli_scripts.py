@@ -4,7 +4,7 @@ import os
 import shutil
 import sys
 
-from .print_utils import cstr, wm_print
+from wingman.print_utils import cstr, wm_print
 
 
 def _get_dir_size(path):

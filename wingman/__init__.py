@@ -1,5 +1,4 @@
 # ruff: noqa: F401
-from .exceptions import NeuralBlocksException, WingmanException
 from .wingman import Wingman
 
 try:
