@@ -14,7 +14,6 @@ import wandb
 import yaml
 
 from wingman.exceptions import WingmanException
-
 from wingman.print_utils import cstr, wm_print
 
 

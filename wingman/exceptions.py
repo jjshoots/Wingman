@@ -41,4 +41,3 @@ class ReplayBufferException(Exception):
         message = cstr(message, "FAIL")
         super().__init__(message)
         self.message = message
-
