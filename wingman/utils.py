@@ -11,8 +11,8 @@ except ImportError as e:
     ) from e
 
 __device = "cpu"
-__device = "mps" if torch.cuda.is_available() else __device
-__device = "cuda:0" if torch.backends.mps.is_available() else __device
+__device = "mps" if torch.backends.mps.is_available() else __device
+__device = "cuda:0" if torch.cuda.is_available() else __device
 
 
 def gpuize(
