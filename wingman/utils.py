@@ -16,7 +16,9 @@ __device = "cuda:0" if torch.cuda.is_available() else __device
 
 
 def gpuize(
-    input, device: str = __device, dtype: torch.dtype = torch.float32
+    input,
+    device: str | torch.device = __device,
+    dtype: torch.dtype = torch.float32,
 ) -> torch.Tensor:
     """gpuize.
 

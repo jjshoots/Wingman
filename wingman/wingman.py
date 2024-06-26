@@ -140,7 +140,6 @@ class Wingman:
             warn(
                 "Could not import torch, this is not bundled as part of Wingman and has to be installed manually."
             )
-            self.device = "Not Found!"
 
         return self.device
 
