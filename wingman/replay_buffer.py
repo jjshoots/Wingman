@@ -234,7 +234,10 @@ class ReplayBuffer(Dataset):
         idx = np.random.choice(
             len(self), size=np.minimum(len(self), batch_size), replace=False
         )
-        return [item[idx] for item in self.memory]
+        if self.mode == _Mode.TORCH:
+            return [item[idx].to(self.device) for item in self.memory]
+        else:
+            return [item[idx] for item in self.memory]
 
     @prefetch(max_prefetch=1)
     def iter_sample(
