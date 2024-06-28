@@ -34,7 +34,9 @@ def randn(
     """
     if mode == "numpy":
         if len(shape) == 0:
-            return np.random.randn(1,)
+            return np.random.randn(
+                1,
+            )
         else:
             return np.random.randn(*shape)
     elif mode == "torch":
