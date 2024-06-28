@@ -1,8 +1,10 @@
 """Tests the replay buffer module."""
 from copy import deepcopy
+from typing import Literal
 
 import numpy as np
 import pytest
+import torch
 
 from wingman.replay_buffer import ReplayBuffer
 
@@ -15,13 +17,44 @@ def is_equivalent_tuple(item1, item2):
     return equivalence
 
 
-@pytest.mark.parametrize("random_rollover", [True, False])
-def test_bulk(random_rollover):
+def randn(
+    shape: tuple[int], mode: Literal["numpy", "torch"]
+) -> np.ndarray | torch.Tensor:
+    """randn.
+
+    Args:
+        shape (tuple[int]): shape
+        mode (Literal["numpy", "torch"]): mode
+
+    Returns:
+        np.ndarray | torch.Tensor:
+    """
+    if mode == "numpy":
+        return np.random.randn(*shape)
+    elif mode == "torch":
+        if len(shape) == 0:
+            return torch.randn(())
+        else:
+            return torch.randn(*shape)
+    else:
+        raise ValueError("Unknown mode.")
+
+
+@pytest.mark.parametrize(
+    "random_rollover, mode",
+    [
+        (True, "numpy"),
+        (False, "numpy"),
+        (True, "torch"),
+        (False, "torch"),
+    ],
+)
+def test_bulk(random_rollover: bool, mode: Literal["numpy", "torch"]):
     """Tests repeatedly bulking the buffer and whether it rollovers correctly."""
     bulk_size = 7
     mem_size = 11
     element_shapes = [(3, 3), (3,), ()]
-    memory = ReplayBuffer(mem_size=mem_size)
+    memory = ReplayBuffer(mem_size=mem_size, mode=mode)
 
     for iteration in range(10):
         # try to stuff:
@@ -29,11 +62,12 @@ def test_bulk(random_rollover):
         # b) (bulk_size,) array
         data = []
         for shape in element_shapes:
-            data.append(np.random.randn(bulk_size, *shape))
+            data.append(randn(shape=(bulk_size, *shape), mode=mode))
+        print([d.shape for d in data])
         memory.push(data, bulk=True, random_rollover=random_rollover)
 
         # reverse the data to make indexing for checking easier
-        reversed_data = list(map(list, zip(*data)))
+        reversed_data = [list(item) for item in zip(*data)]
 
         # if random rollover and we're more than full, different matching technique
         if random_rollover and memory.is_full:
@@ -58,18 +92,26 @@ def test_bulk(random_rollover):
                 step {step}, expected {item1}, got {item2}."""
 
 
-@pytest.mark.parametrize("random_rollover", [True, False])
-def test_non_bulk(random_rollover):
+@pytest.mark.parametrize(
+    "random_rollover, mode",
+    [
+        (True, "numpy"),
+        (False, "numpy"),
+        (True, "torch"),
+        (False, "torch"),
+    ],
+)
+def test_non_bulk(random_rollover: bool, mode: Literal["numpy", "torch"]):
     """Tests the replay buffer generically."""
     mem_size = 11
     element_shapes = [(3, 3), (3,), ()]
-    memory = ReplayBuffer(mem_size=mem_size)
+    memory = ReplayBuffer(mem_size=mem_size, mode=mode)
 
     previous_data = []
     for iteration in range(20):
         current_data = []
         for shape in element_shapes:
-            current_data.append(np.random.randn(*shape))
+            current_data.append(randn(shape=shape, mode=mode))
         memory.push(current_data, random_rollover=random_rollover)
 
         # if random rollover and we're more than full, different matching method

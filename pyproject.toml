@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jj_wingman"
-version = "0.10.1"
+version = "0.10.2"
 authors = [
   { name="Jet", email="taijunjet@hotmail.com" },
 ]
@@ -16,7 +16,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dependencies = ["numpy", "wandb", "pyyaml"]
+dependencies = ["numpy", "wandb", "pyyaml", "prefetch-generator"]
 keywords = ["Machine Learning"]
 license = { file="./LICENSE.txt" }
 
