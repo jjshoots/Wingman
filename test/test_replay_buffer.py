@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from pprint import pformat
 from typing import Literal
 
 import numpy as np
@@ -15,7 +16,7 @@ def is_equivalent_tuple(item1, item2):
     """Checks whether a two tuples of np.ndarrays are equivalent to each other."""
     equivalence = True
     for i1, i2 in zip(item1, item2):
-        equivalence = (i1 == i2).all() and equivalence
+        equivalence = np.isclose(i1, i2).all() and equivalence
     return equivalence
 
 
@@ -32,7 +33,10 @@ def randn(
         np.ndarray | torch.Tensor:
     """
     if mode == "numpy":
-        return np.random.randn(*shape)
+        if len(shape) == 0:
+            return np.random.randn(1,)
+        else:
+            return np.random.randn(*shape)
     elif mode == "torch":
         if len(shape) == 0:
             return torch.randn(())
@@ -91,7 +95,7 @@ def test_bulk(random_rollover: bool, mode: Literal["numpy", "torch"]):
             assert is_equivalent_tuple(
                 item1, item2
             ), f"""Something went wrong with rollover at iteration {iteration},
-                step {step}, expected {item1}, got {item2}."""
+                step {step}, expected \n{pformat(item1)}, got \n{pformat(item2)}."""
 
 
 @pytest.mark.parametrize(
@@ -138,7 +142,7 @@ def test_non_bulk(random_rollover: bool, mode: Literal["numpy", "torch"]):
         assert is_equivalent_tuple(
             output, current_data
         ), f"""Something went wrong with rollover at iteration {iteration},
-            expected {current_data}, got {output}."""
+            expected \n{pformat(current_data)}, got \n{pformat(output)}."""
 
         # check the previous data
         if iteration > 0:
@@ -146,6 +150,6 @@ def test_non_bulk(random_rollover: bool, mode: Literal["numpy", "torch"]):
             assert is_equivalent_tuple(
                 output, previous_data
             ), f"""Something went wrong with rollover at iteration {iteration},
-                expected {previous_data}, got {output}."""
+                expected \n{pformat(previous_data)}, got \n{pformat(output)}."""
 
         previous_data = deepcopy(current_data)

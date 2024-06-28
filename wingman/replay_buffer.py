@@ -118,7 +118,7 @@ class ReplayBuffer(Dataset):
 
             # dim check
             if bulk and len(data.shape) < 1:
-                data = np.expand_dims(data, axis=0)
+                data = np.expand_dims(data, axis=-1)
         elif self.mode == _Mode.TORCH:
             # cast to the right dtype, store on CPU intentionally
             data = torch.asarray(
@@ -130,7 +130,7 @@ class ReplayBuffer(Dataset):
 
             # dim check
             if bulk and len(data.shape) < 1:
-                data = data.unsqueeze(0)
+                data = data.unsqueeze(-1)
         else:
             raise ReplayBufferException(
                 f"Unknown mode {self.mode}. Only `'numpy'` and `'torch'` are allowed."
