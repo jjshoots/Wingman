@@ -54,10 +54,12 @@ class ReplayBuffer(Dataset):
             self.mode = _Mode.NUMPY
             self.mode_type = np.ndarray
             self.mode_caller = np
+            self.mode_dtype = np.float32
         elif mode == "torch":
             self.mode = _Mode.TORCH
             self.mode_type = torch.Tensor
             self.mode_caller = torch
+            self.mode_dtype = torch.float32
         else:
             raise ReplayBufferException(
                 f"Unknown mode {mode}. Only `'numpy'` and `'torch'` are allowed."
@@ -109,25 +111,32 @@ class ReplayBuffer(Dataset):
         """
         if self.mode == _Mode.NUMPY:
             # cast to the right dtype
-            thing = np.asarray(thing)
+            data = np.asarray(
+                thing,
+                dtype=self.mode_dtype,  # pyright: ignore[reportGeneralTypeIssues]
+            )
 
             # dim check
-            if bulk and len(thing.shape) < 1:
-                thing = np.expand_dims(thing, axis=0)
+            if bulk and len(data.shape) < 1:
+                data = np.expand_dims(data, axis=0)
         elif self.mode == _Mode.TORCH:
             # cast to the right dtype, store on CPU intentionally
-            thing = torch.asarray(thing, device=self.cpu_device)
-            thing.requires_grad_(False)
+            data = torch.asarray(
+                thing,
+                device=self.cpu_device,
+                dtype=self.mode_dtype,  # pyright: ignore[reportGeneralTypeIssues]
+            )
+            data.requires_grad_(False)
 
             # dim check
-            if bulk and len(thing.shape) < 1:
-                thing = thing.unsqueeze(0)
+            if bulk and len(data.shape) < 1:
+                data = data.unsqueeze(0)
         else:
             raise ReplayBufferException(
                 f"Unknown mode {self.mode}. Only `'numpy'` and `'torch'` are allowed."
             )
 
-        return thing
+        return data
 
     def push(
         self,
@@ -172,14 +181,20 @@ class ReplayBuffer(Dataset):
             if not bulk:
                 self.memory.extend(
                     [
-                        self.mode_caller.zeros((self.mem_size, *item.shape))
+                        self.mode_caller.zeros(
+                            (self.mem_size, *item.shape),
+                            dtype=self.mode_dtype,  # pyright: ignore[reportGeneralTypeIssues]
+                        )
                         for item in array_data
                     ]
                 )
             else:
                 self.memory.extend(
                     [
-                        self.mode_caller.zeros((self.mem_size, *item.shape[1:]))
+                        self.mode_caller.zeros(
+                            (self.mem_size, *item.shape[1:]),
+                            dtype=self.mode_dtype,  # pyright: ignore[reportGeneralTypeIssues]
+                        )
                         for item in array_data
                     ]
                 )
