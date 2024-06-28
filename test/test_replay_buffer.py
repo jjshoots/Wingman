@@ -1,4 +1,6 @@
 """Tests the replay buffer module."""
+from __future__ import annotations
+
 from copy import deepcopy
 from typing import Literal
 
