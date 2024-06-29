@@ -1,4 +1,5 @@
 """CLI functionality of Wingman."""
+
 import glob
 import os
 import shutil

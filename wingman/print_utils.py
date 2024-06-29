@@ -1,4 +1,5 @@
 """For fancy printing in Wingman."""
+
 from __future__ import annotations
 
 import re
@@ -28,11 +29,14 @@ def cstr(
     """Makes a string colourful.
 
     Args:
+    ----
         x (Any): the string
         ctype (str): the colour
 
     Returns:
+    -------
         str: the coloured string
+
     """
     return f"{c_colors[ctype]}{x}{end_c}"
 
@@ -45,8 +49,10 @@ def wm_print(x: Any, log_file: Path | str | bool = False):
     """Prints out strings decorated with the wingman status.
 
     Args:
+    ----
         x (Any): the input string
         log_file (str): a target path to save the log file if any
+
     """
     print(f"{log_flag}: {x}")
 

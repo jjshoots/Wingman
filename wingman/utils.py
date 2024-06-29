@@ -1,4 +1,5 @@
 """Some simple Wingman functionality."""
+
 from __future__ import annotations
 
 import numpy as np
@@ -23,9 +24,11 @@ def gpuize(
     """gpuize.
 
     Args:
+    ----
         input: the array that we want to gpuize
         device: a string of the device we want to move the thing to
         dtype: the datatype that the returned tensor should be
+
     """
     if torch.is_tensor(input):
         return input.to(device=device, dtype=dtype)
@@ -37,7 +40,9 @@ def cpuize(input) -> np.ndarray:
     """cpuize.
 
     Args:
+    ----
         input: the array of the thing we want to put on the cpu
+
     """
     if torch.is_tensor(input):
         return input.detach().cpu().numpy()
@@ -49,7 +54,9 @@ def shutdown_handler(*_):
     """shutdown_handler.
 
     Args:
+    ----
         _:
+
     """
     print("ctrl-c invoked")
     exit(0)
