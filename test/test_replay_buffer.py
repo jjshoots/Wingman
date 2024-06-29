@@ -29,7 +29,7 @@ def _cast(array: np.ndarray | torch.Tensor | float | int) -> np.ndarray:
     if isinstance(array, np.ndarray):
         return array
     elif isinstance(array, torch.Tensor):
-        return array.cpu().numpy()
+        return array.cpu().numpy()  # pyright: ignore[reportAttributeAccessIssue]
     else:
         return np.asarray(array)
 
