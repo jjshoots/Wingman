@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from itertools import product
 from pprint import pformat
-from typing import Literal
+from typing import Literal, Sequence
 
 import numpy as np
 import pytest
@@ -12,18 +13,49 @@ import torch
 from wingman.replay_buffer import ReplayBuffer
 
 
-def is_equivalent_tuple(item1, item2):
-    """Checks whether a two tuples of np.ndarrays are equivalent to each other."""
+def _cast(array: np.ndarray | torch.Tensor | float | int) -> np.ndarray:
+    """_cast.
+
+    Args:
+        array (np.ndarray | torch.Tensor): array
+
+    Returns:
+        np.ndarray:
+    """
+    if isinstance(array, np.ndarray):
+        return array
+    elif isinstance(array, torch.Tensor):
+        return array.cpu().numpy()
+    else:
+        return np.asarray(array)
+
+
+def _is_equivalent_tuple(
+    item1: Sequence[np.ndarray | torch.Tensor | float | int],
+    item2: Sequence[np.ndarray | torch.Tensor | float | int],
+) -> bool:
+    """Checks whether a two tuples of np.ndarrays are equivalent to each other.
+
+    Args:
+        item1 (tuple[np.ndarray | torch.Tensor | float | int]): item1
+        item2 (tuple[np.ndarray | torch.Tensor | float | int]): item2
+
+    Returns:
+        bool:
+    """
     equivalence = True
+
+    item1 = [_cast(array) for array in item1]
+    item2 = [_cast(array) for array in item2]
     for i1, i2 in zip(item1, item2):
         equivalence = np.isclose(i1, i2).all() and equivalence
-    return equivalence
+    return bool(equivalence)
 
 
-def randn(
+def _randn(
     shape: tuple[int], mode: Literal["numpy", "torch"]
 ) -> np.ndarray | torch.Tensor:
-    """randn.
+    """_randn.
 
     Args:
         shape (tuple[int]): shape
@@ -43,21 +75,38 @@ def randn(
         raise ValueError("Unknown mode.")
 
 
-@pytest.mark.parametrize(
-    "random_rollover, mode",
-    [
-        (True, "numpy"),
-        (False, "numpy"),
-        (True, "torch"),
-        (False, "torch"),
-    ],
+# define the test configurations
+_random_rollovers = [True, False]
+_modes = ["numpy", "torch"]
+_devices = [torch.device("cpu")]
+if torch.cuda.is_available():
+    _devices.append(torch.device("cuda:0"))
+_store_on_devices = [True, False]
+ALL_CONFIGURATIONS = product(
+    _random_rollovers,
+    _modes,
+    _devices,
+    _store_on_devices,
 )
-def test_bulk(random_rollover: bool, mode: Literal["numpy", "torch"]):
+
+
+@pytest.mark.parametrize(
+    "random_rollover, mode, device, store_on_device",
+    ALL_CONFIGURATIONS,
+)
+def test_bulk(
+    random_rollover: bool,
+    mode: Literal["numpy", "torch"],
+    device: torch.device,
+    store_on_device: bool,
+):
     """Tests repeatedly bulking the buffer and whether it rollovers correctly."""
     bulk_size = 7
     mem_size = 11
     element_shapes = [(3, 3), (3,), ()]
-    memory = ReplayBuffer(mem_size=mem_size, mode=mode)
+    memory = ReplayBuffer(
+        mem_size=mem_size, mode=mode, device=device, store_on_device=store_on_device
+    )
 
     for iteration in range(10):
         # try to stuff:
@@ -65,7 +114,7 @@ def test_bulk(random_rollover: bool, mode: Literal["numpy", "torch"]):
         # b) (bulk_size,) array
         data = []
         for shape in element_shapes:
-            data.append(randn(shape=(bulk_size, *shape), mode=mode))
+            data.append(_randn(shape=(bulk_size, *shape), mode=mode))
         print([d.shape for d in data])
         memory.push(data, bulk=True, random_rollover=random_rollover)
 
@@ -78,7 +127,7 @@ def test_bulk(random_rollover: bool, mode: Literal["numpy", "torch"]):
             # match according to meshgrid
             for item1 in reversed_data:
                 for item2 in memory:
-                    num_matches += int(is_equivalent_tuple(item1, item2))
+                    num_matches += int(_is_equivalent_tuple(item1, item2))
 
             assert (
                 num_matches == bulk_size
@@ -89,32 +138,34 @@ def test_bulk(random_rollover: bool, mode: Literal["numpy", "torch"]):
         for step in range(bulk_size):
             item1 = reversed_data[step]
             item2 = memory.__getitem__((iteration * bulk_size + step) % mem_size)
-            assert is_equivalent_tuple(
+            assert _is_equivalent_tuple(
                 item1, item2
             ), f"""Something went wrong with rollover at iteration {iteration},
                 step {step}, expected \n{pformat(item1)}, got \n{pformat(item2)}."""
 
 
 @pytest.mark.parametrize(
-    "random_rollover, mode",
-    [
-        (True, "numpy"),
-        (False, "numpy"),
-        (True, "torch"),
-        (False, "torch"),
-    ],
+    "random_rollover, mode, device, store_on_device",
+    ALL_CONFIGURATIONS,
 )
-def test_non_bulk(random_rollover: bool, mode: Literal["numpy", "torch"]):
+def test_non_bulk(
+    random_rollover: bool,
+    mode: Literal["numpy", "torch"],
+    device: torch.device,
+    store_on_device: bool,
+):
     """Tests the replay buffer generically."""
     mem_size = 11
     element_shapes = [(3, 3), (3,), ()]
-    memory = ReplayBuffer(mem_size=mem_size, mode=mode)
+    memory = ReplayBuffer(
+        mem_size=mem_size, mode=mode, device=device, store_on_device=store_on_device
+    )
 
     previous_data = []
     for iteration in range(20):
         current_data = []
         for shape in element_shapes:
-            current_data.append(randn(shape=shape, mode=mode))
+            current_data.append(_randn(shape=shape, mode=mode))
         memory.push(current_data, random_rollover=random_rollover)
 
         # if random rollover and we're more than full, different matching method
@@ -122,8 +173,8 @@ def test_non_bulk(random_rollover: bool, mode: Literal["numpy", "torch"]):
             num_current_matches = 0
             num_previous_matches = 0
             for item in memory:
-                num_current_matches += int(is_equivalent_tuple(item, current_data))
-                num_previous_matches += int(is_equivalent_tuple(item, previous_data))
+                num_current_matches += int(_is_equivalent_tuple(item, current_data))
+                num_previous_matches += int(_is_equivalent_tuple(item, previous_data))
 
             assert (
                 num_current_matches == 1
@@ -136,7 +187,7 @@ def test_non_bulk(random_rollover: bool, mode: Literal["numpy", "torch"]):
 
         # check the current data
         output = memory.__getitem__(iteration % mem_size)
-        assert is_equivalent_tuple(
+        assert _is_equivalent_tuple(
             output, current_data
         ), f"""Something went wrong with rollover at iteration {iteration},
             expected \n{pformat(current_data)}, got \n{pformat(output)}."""
@@ -144,7 +195,7 @@ def test_non_bulk(random_rollover: bool, mode: Literal["numpy", "torch"]):
         # check the previous data
         if iteration > 0:
             output = memory.__getitem__((iteration - 1) % mem_size)
-            assert is_equivalent_tuple(
+            assert _is_equivalent_tuple(
                 output, previous_data
             ), f"""Something went wrong with rollover at iteration {iteration},
                 expected \n{pformat(previous_data)}, got \n{pformat(output)}."""

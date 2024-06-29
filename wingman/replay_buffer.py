@@ -35,11 +35,15 @@ class ReplayBuffer(Dataset):
         mem_size: int,
         mode: Literal["numpy", "torch"] = "numpy",
         device: torch.device = torch.device("cpu"),
+        store_on_device: bool = False,
     ):
         """__init__.
 
         Args:
             mem_size (int): number of transitions the replay buffer aims to hold
+            mode (Literal["numpy", "torch"]): Whether to store data as "torch" or "numpy".
+            device (torch.device): The target device that data will be retrieved to if "torch".
+            store_on_device (bool): Whether to store the entire replay on the specified device, otherwise stored on CPU.
         """
         self.memory = []
         self.mem_size = int(mem_size)
@@ -47,7 +51,7 @@ class ReplayBuffer(Dataset):
 
         # store the device
         self.device = device
-        self.cpu_device = torch.device("cpu")
+        self.storage_device = self.device if store_on_device else torch.device("cpu")
 
         # store the mode
         if mode == "numpy":
@@ -74,6 +78,14 @@ class ReplayBuffer(Dataset):
         return min(self.mem_size, self.count)
 
     def __getitem__(self, idx) -> list[np.ndarray | torch.Tensor]:
+        """__getitem__.
+
+        Args:
+            idx:
+
+        Returns:
+            list[np.ndarray | torch.Tensor]:
+        """
         return list(d[idx] for d in self.memory)
 
     def __repr__(self) -> str:
@@ -123,7 +135,7 @@ class ReplayBuffer(Dataset):
             # cast to the right dtype, store on CPU intentionally
             data = torch.asarray(
                 thing,
-                device=self.cpu_device,
+                device=self.storage_device,
                 dtype=self.mode_dtype,  # pyright: ignore[reportGeneralTypeIssues]
             )
             data.requires_grad_(False)
@@ -198,6 +210,10 @@ class ReplayBuffer(Dataset):
                         for item in array_data
                     ]
                 )
+
+            # move everything to the storage device if torch
+            if self.mode == _Mode.TORCH:
+                self.memory = [array.to(self.storage_device) for array in self.memory]
 
             mem_size_bytes = sum([d.nbytes for d in self.memory])
             wm_print(
