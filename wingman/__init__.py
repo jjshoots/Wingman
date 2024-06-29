@@ -1,3 +1,5 @@
+"""The main Wingman package."""
+
 # ruff: noqa: F401
 from .wingman import Wingman
 

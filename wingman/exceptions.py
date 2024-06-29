@@ -1,3 +1,5 @@
+"""Exceptions."""
+
 from wingman.print_utils import cstr
 
 
@@ -8,7 +10,9 @@ class WingmanException(Exception):
         """__init__.
 
         Args:
+        ----
             message (str): the message
+
         """
         message = cstr(message, "FAIL")
         super().__init__(message)
@@ -22,7 +26,9 @@ class NeuralBlocksException(Exception):
         """__init__.
 
         Args:
+        ----
             message (str): the message
+
         """
         message = cstr(message, "FAIL")
         super().__init__(message)
@@ -36,7 +42,9 @@ class ReplayBufferException(Exception):
         """__init__.
 
         Args:
+        ----
             message (str): the message
+
         """
         message = cstr(message, "FAIL")
         super().__init__(message)

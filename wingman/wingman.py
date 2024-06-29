@@ -1,4 +1,5 @@
 """The core of Wingman."""
+
 from __future__ import annotations
 
 import argparse
@@ -58,8 +59,10 @@ class Wingman:
         """__init__.
 
         Args:
+        ----
             config_yaml (str): location of where the config yaml is described
             experiment_description (str): optional description of the experiment
+
         """
         # save our experiment description
         self.config_yaml: Path = Path(config_yaml)
@@ -241,11 +244,14 @@ class Wingman:
         - path of where the optim files should be saved
 
         Args:
+        ----
             loss (float): learning loss of the model as a detached float
             step (int | None): step number, automatically incremented if None
 
         Returns:
+        -------
             Tuple[bool, Path, Path]: to_update, weights_file, optim_file
+
         """
         # if step is None, we automatically increment
         if step is None:
@@ -350,8 +356,10 @@ class Wingman:
         wm.log["foo"] = "bar"
         ```
 
-        Returns:
+        Returns
+        -------
             None:
+
         """
         if not isinstance(self.log, dict):
             raise WingmanException(
@@ -366,12 +374,15 @@ class Wingman:
         """write_auxiliary.
 
         Args:
+        ----
             data (np.ndarray): data
             variable_name (str): variable_name
             precision (str): precision
 
         Returns:
+        -------
             None:
+
         """
         if not len(data.shape) == 1:
             raise WingmanException(
@@ -390,10 +401,13 @@ class Wingman:
         - directory of where the optim files are
 
         Args:
+        ----
             latest (bool): whether we want the latest file or the one determined by `ckpt_number`
 
         Returns:
+        -------
             Tuple[bool, Path, Path]: have_file, weights_file, optim_file
+
         """
         # if we don't need the latest file, get the one specified
         if not latest:

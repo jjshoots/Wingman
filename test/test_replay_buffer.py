@@ -1,4 +1,5 @@
 """Tests the replay buffer module."""
+
 from __future__ import annotations
 
 from copy import deepcopy
@@ -17,10 +18,13 @@ def _cast(array: np.ndarray | torch.Tensor | float | int) -> np.ndarray:
     """_cast.
 
     Args:
+    ----
         array (np.ndarray | torch.Tensor | float | int): array
 
     Returns:
+    -------
         np.ndarray:
+
     """
     if isinstance(array, np.ndarray):
         return array
@@ -37,11 +41,14 @@ def _is_equivalent_tuple(
     """Checks whether a two tuples of np.ndarrays are equivalent to each other.
 
     Args:
+    ----
         item1 (tuple[np.ndarray | torch.Tensor | float | int]): item1
         item2 (tuple[np.ndarray | torch.Tensor | float | int]): item2
 
     Returns:
+    -------
         bool:
+
     """
     equivalence = True
 
@@ -58,11 +65,14 @@ def _randn(
     """_randn.
 
     Args:
+    ----
         shape (tuple[int]): shape
         mode (Literal["numpy", "torch"]): mode
 
     Returns:
+    -------
         np.ndarray | torch.Tensor:
+
     """
     if mode == "numpy":
         return np.random.randn(*shape)

@@ -1,4 +1,5 @@
 """Replay buffer implementation with push, automatic overflow, and automatic torch dataset functionality."""
+
 from __future__ import annotations
 
 from enum import Enum
@@ -40,10 +41,12 @@ class ReplayBuffer(Dataset):
         """__init__.
 
         Args:
+        ----
             mem_size (int): number of transitions the replay buffer aims to hold
             mode (Literal["numpy", "torch"]): Whether to store data as "torch" or "numpy".
             device (torch.device): The target device that data will be retrieved to if "torch".
             store_on_device (bool): Whether to store the entire replay on the specified device, otherwise stored on CPU.
+
         """
         self.memory = []
         self.mem_size = int(mem_size)
@@ -72,27 +75,34 @@ class ReplayBuffer(Dataset):
     def __len__(self) -> int:
         """The number of memory items this replay buffer is holding.
 
-        Returns:
+        Returns
+        -------
             int:
+
         """
         return min(self.mem_size, self.count)
 
-    def __getitem__(self, idx) -> list[np.ndarray | torch.Tensor]:
+    def __getitem__(self, idx: int) -> list[np.ndarray | torch.Tensor]:
         """__getitem__.
 
         Args:
-            idx:
+        ----
+            idx (int): idx
 
         Returns:
+        -------
             list[np.ndarray | torch.Tensor]:
+
         """
         return list(d[idx] for d in self.memory)
 
     def __repr__(self) -> str:
         """Printouts parameters of this replay buffer.
 
-        Returns:
+        Returns
+        -------
             str:
+
         """
         return f"""ReplayBuffer of size {self.mem_size} with {len(self.memory)} elements. \n
         Element shapes are {[elem.shape[1:] for elem in self.memory]}. \n
@@ -104,8 +114,10 @@ class ReplayBuffer(Dataset):
     def is_full(self) -> bool:
         """Whether or not the replay buffer has reached capacity.
 
-        Returns:
+        Returns
+        -------
             bool: whether the buffer is full
+
         """
         return self.count >= self.mem_size
 
@@ -115,11 +127,14 @@ class ReplayBuffer(Dataset):
         """_format_data.
 
         Args:
+        ----
             thing (np.ndarray | torch.Tensor | float | int | bool): thing
             bulk (bool): bulk
 
         Returns:
+        -------
             np.ndarray | torch.Tensor:
+
         """
         if self.mode == _Mode.NUMPY:
             # cast to the right dtype
@@ -163,9 +178,11 @@ class ReplayBuffer(Dataset):
         - an n-long tuple of m transitions, ie: a list of [m, ...] np arrays with the `bulk` flag set to True
 
         Args:
+        ----
             data (Sequence[torch.Tensor | np.ndarray | float | int | bool]): data
             bulk (bool): whether to bulk add stuff into the replay buffer
             random_rollover (bool): whether to rollover the data in the replay buffer once full or to randomly insert
+
         """
         # cast to dtype and conditionally add batch dim
         array_data = [self._format_data(item, bulk=True) for item in data]
@@ -257,10 +274,13 @@ class ReplayBuffer(Dataset):
         """sample.
 
         Args:
+        ----
             batch_size (int): batch_size
 
         Returns:
+        -------
             list[np.ndarray | torch.Tensor]:
+
         """
         idx = np.random.choice(
             len(self), size=np.minimum(len(self), batch_size), replace=False
@@ -277,11 +297,14 @@ class ReplayBuffer(Dataset):
         """iter_sample.
 
         Args:
+        ----
             batch_size (int): batch_size
             num_iter (int): num_iter
 
         Returns:
+        -------
             Generator[list[np.ndarray | torch.Tensor], None, None]:
+
         """
         for _ in range(num_iter):
             yield (self.sample(batch_size=batch_size))
