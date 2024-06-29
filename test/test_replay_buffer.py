@@ -17,7 +17,7 @@ def _cast(array: np.ndarray | torch.Tensor | float | int) -> np.ndarray:
     """_cast.
 
     Args:
-        array (np.ndarray | torch.Tensor): array
+        array (np.ndarray | torch.Tensor | float | int): array
 
     Returns:
         np.ndarray:
