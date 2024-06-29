@@ -7,8 +7,7 @@ class WingmanException(Exception):
     """WingmanException."""
 
     def __init__(self, message: str = ""):
-        """
-        __init__.
+        """__init__.
 
         Args:
         ----
@@ -24,8 +23,7 @@ class NeuralBlocksException(Exception):
     """NeuralBlocksException."""
 
     def __init__(self, message: str = ""):
-        """
-        __init__.
+        """__init__.
 
         Args:
         ----
@@ -41,8 +39,7 @@ class ReplayBufferException(Exception):
     """ReplayBufferException."""
 
     def __init__(self, message: str = ""):
-        """
-        __init__.
+        """__init__.
 
         Args:
         ----

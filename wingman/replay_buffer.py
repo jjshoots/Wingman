@@ -38,8 +38,7 @@ class ReplayBuffer(Dataset):
         device: torch.device = torch.device("cpu"),
         store_on_device: bool = False,
     ):
-        """
-        __init__.
+        """__init__.
 
         Args:
         ----
@@ -74,8 +73,7 @@ class ReplayBuffer(Dataset):
             )
 
     def __len__(self) -> int:
-        """
-        The number of memory items this replay buffer is holding.
+        """The number of memory items this replay buffer is holding.
 
         Returns
         -------
@@ -85,8 +83,7 @@ class ReplayBuffer(Dataset):
         return min(self.mem_size, self.count)
 
     def __getitem__(self, idx: int) -> list[np.ndarray | torch.Tensor]:
-        """
-        __getitem__.
+        """__getitem__.
 
         Args:
         ----
@@ -100,8 +97,7 @@ class ReplayBuffer(Dataset):
         return list(d[idx] for d in self.memory)
 
     def __repr__(self) -> str:
-        """
-        Printouts parameters of this replay buffer.
+        """Printouts parameters of this replay buffer.
 
         Returns
         -------
@@ -116,8 +112,7 @@ class ReplayBuffer(Dataset):
 
     @property
     def is_full(self) -> bool:
-        """
-        Whether or not the replay buffer has reached capacity.
+        """Whether or not the replay buffer has reached capacity.
 
         Returns
         -------
@@ -129,8 +124,7 @@ class ReplayBuffer(Dataset):
     def _format_data(
         self, thing: np.ndarray | torch.Tensor | float | int | bool, bulk: bool
     ) -> np.ndarray | torch.Tensor:
-        """
-        _format_data.
+        """_format_data.
 
         Args:
         ----
@@ -177,8 +171,7 @@ class ReplayBuffer(Dataset):
         bulk: bool = False,
         random_rollover: bool = False,
     ):
-        """
-        Adds transition tuples into the replay buffer.
+        """Adds transition tuples into the replay buffer.
 
         The data must be either:
         - an n-long tuple of a single transition
@@ -278,8 +271,7 @@ class ReplayBuffer(Dataset):
         self.count += bulk_size
 
     def sample(self, batch_size: int) -> list[np.ndarray | torch.Tensor]:
-        """
-        sample.
+        """sample.
 
         Args:
         ----
@@ -302,8 +294,7 @@ class ReplayBuffer(Dataset):
     def iter_sample(
         self, batch_size: int, num_iter: int
     ) -> Generator[list[np.ndarray | torch.Tensor], None, None]:
-        """
-        iter_sample.
+        """iter_sample.
 
         Args:
         ----

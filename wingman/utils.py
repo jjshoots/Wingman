@@ -21,8 +21,7 @@ def gpuize(
     device: str | torch.device = __device,
     dtype: torch.dtype = torch.float32,
 ) -> torch.Tensor:
-    """
-    gpuize.
+    """gpuize.
 
     Args:
     ----
@@ -38,8 +37,7 @@ def gpuize(
 
 
 def cpuize(input) -> np.ndarray:
-    """
-    cpuize.
+    """cpuize.
 
     Args:
     ----
@@ -53,8 +51,7 @@ def cpuize(input) -> np.ndarray:
 
 
 def shutdown_handler(*_):
-    """
-    shutdown_handler.
+    """shutdown_handler.
 
     Args:
     ----

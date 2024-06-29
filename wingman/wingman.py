@@ -19,8 +19,7 @@ from wingman.print_utils import cstr, wm_print
 
 
 class Wingman:
-    """
-    Wingman.
+    """Wingman.
 
     Class to handle checkpointing of loss and handling of weights files.
     Minimal example:
@@ -57,8 +56,7 @@ class Wingman:
         config_yaml: str | Path,
         experiment_description: str = "",
     ):
-        """
-        __init__.
+        """__init__.
 
         Args:
         ----
@@ -236,8 +234,7 @@ class Wingman:
     def checkpoint(
         self, loss: float, step: int | None = None
     ) -> Tuple[bool, Path, Path]:
-        """
-        checkpoint.
+        """checkpoint.
 
         Records training every logging_interval steps.
 
@@ -351,8 +348,7 @@ class Wingman:
         return True, self.model_file, self.optim_file
 
     def wandb_log(self) -> None:
-        """
-        wandb_log.
+        """wandb_log.
 
         Logs the internal log to WandB.
         Start logging by adding things to it using:
@@ -375,8 +371,7 @@ class Wingman:
     def write_auxiliary(
         self, data: np.ndarray, variable_name: str, precision: str = "%1.3f"
     ) -> None:
-        """
-        write_auxiliary.
+        """write_auxiliary.
 
         Args:
         ----
@@ -398,8 +393,7 @@ class Wingman:
             np.savetxt(f, [data], delimiter=",", fmt=precision)
 
     def get_weight_files(self, latest: bool = True) -> Tuple[bool, Path, Path]:
-        """
-        get_weight_files.
+        """get_weight_files.
 
         Returns three things:
         - indicator on whether we have weight files

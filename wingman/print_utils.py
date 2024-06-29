@@ -26,8 +26,7 @@ def cstr(
         "HEADER", "OKBLUE", "OKCYAN", "OKGREEN", "WARNING", "FAIL", "BOLD", "UNDERLINE"
     ],
 ) -> str:
-    """
-    Makes a string colourful.
+    """Makes a string colourful.
 
     Args:
     ----
@@ -47,8 +46,7 @@ ansi_escape = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")
 
 
 def wm_print(x: Any, log_file: Path | str | bool = False):
-    """
-    Prints out strings decorated with the wingman status.
+    """Prints out strings decorated with the wingman status.
 
     Args:
     ----

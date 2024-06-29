@@ -31,8 +31,7 @@ class NeuralBlocks:
         padding: Optional[int] = None,
         norm: str = "non",
     ) -> nn.Sequential:
-        """
-        conv_module.
+        """conv_module.
 
         Args:
         ----
@@ -99,8 +98,7 @@ class NeuralBlocks:
         norm: str = "non",
         bias: bool = True,
     ) -> nn.Sequential:
-        """
-        linear_module.
+        """linear_module.
 
         Args:
         ----
@@ -142,8 +140,7 @@ class NeuralBlocks:
         activation: str,
         norm: str = "non",
     ) -> nn.Sequential:
-        """
-        deconv_module.
+        """deconv_module.
 
         Args:
         ----
@@ -186,8 +183,7 @@ class NeuralBlocks:
 
     @classmethod
     def get_activation(cls, activation: str) -> nn.Module:
-        """
-        get_activation.
+        """get_activation.
 
         Args:
         ----
@@ -215,8 +211,7 @@ class NeuralBlocks:
     def get_normalization(
         cls, activation: str, num_features: int, dimension: int
     ) -> nn.Module:
-        """
-        get_normalization.
+        """get_normalization.
 
         Args:
         ----
@@ -254,8 +249,7 @@ class NeuralBlocks:
         padding: Optional[int] = None,
         norm: str = "non",
     ) -> nn.Sequential:
-        """
-        generate_conv_stack.
+        """generate_conv_stack.
 
         Args:
         ----
@@ -308,8 +302,7 @@ class NeuralBlocks:
         activation_description: List[str],
         norm: str = "non",
     ) -> nn.Sequential:
-        """
-        generate_deconv_stack.
+        """generate_deconv_stack.
 
         Args:
         ----
@@ -361,8 +354,7 @@ class NeuralBlocks:
         norm: str = "non",
         bias: bool = True,
     ) -> nn.Sequential:
-        """
-        generate_linear_stack.
+        """generate_linear_stack.
 
         Args:
         ----
