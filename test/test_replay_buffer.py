@@ -15,7 +15,8 @@ from wingman.replay_buffer import ReplayBuffer
 
 
 def _cast(array: np.ndarray | torch.Tensor | float | int) -> np.ndarray:
-    """_cast.
+    """
+    _cast.
 
     Args:
     ----
@@ -38,7 +39,8 @@ def _is_equivalent_tuple(
     item1: Sequence[np.ndarray | torch.Tensor | float | int],
     item2: Sequence[np.ndarray | torch.Tensor | float | int],
 ) -> bool:
-    """Checks whether a two tuples of np.ndarrays are equivalent to each other.
+    """
+    Checks whether a two tuples of np.ndarrays are equivalent to each other.
 
     Args:
     ----
@@ -62,7 +64,8 @@ def _is_equivalent_tuple(
 def _randn(
     shape: tuple[int], mode: Literal["numpy", "torch"]
 ) -> np.ndarray | torch.Tensor:
-    """_randn.
+    """
+    _randn.
 
     Args:
     ----

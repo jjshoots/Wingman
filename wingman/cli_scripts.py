@@ -20,7 +20,8 @@ def _get_dir_size(path):
 
 
 def compress_weights():
-    """Compresses the weights directory by deleting empty directories and compressing all mark numbers down to 0.
+    """
+    Compresses the weights directory by deleting empty directories and compressing all mark numbers down to 0.
 
     Example CLI usage:
     `wingman-compress-weights [optional weights directory]`
@@ -114,7 +115,8 @@ def compress_weights():
 
 
 def generate_yaml():
-    """Generates the basic yaml file for the Wingman module.
+    """
+    Generates the basic yaml file for the Wingman module.
 
     Example CLI usage:
     `wingman-generate-yaml [optional filename]`

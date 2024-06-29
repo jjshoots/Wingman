@@ -43,5 +43,5 @@ reportMissingImports = "none"
 
 [tool.ruff.lint]
 # pyflakes, pycodestyle, isort
-ignore = ["D401"]
+ignore = ["D401", "D203", "D212"]
 select = ["E4", "E7", "E9", "F", "I", "D"]
