@@ -174,7 +174,7 @@ class ReplayBuffer(Dataset):
         self,
         data: Sequence[torch.Tensor | np.ndarray | float | int | bool],
         bulk: bool = False,
-    ):
+    ) -> None:
         """Adds transition tuples into the replay buffer.
 
         The data must be either:
