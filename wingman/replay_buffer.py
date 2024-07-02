@@ -37,6 +37,7 @@ class ReplayBuffer(Dataset):
         mode: Literal["numpy", "torch"] = "numpy",
         device: torch.device = torch.device("cpu"),
         store_on_device: bool = False,
+        random_rollover: bool = False,
     ):
         """__init__.
 
@@ -46,6 +47,7 @@ class ReplayBuffer(Dataset):
             mode (Literal["numpy", "torch"]): Whether to store data as "torch" or "numpy".
             device (torch.device): The target device that data will be retrieved to if "torch".
             store_on_device (bool): Whether to store the entire replay on the specified device, otherwise stored on CPU.
+            random_rollover (bool): whether to rollover the data in the replay buffer once full or to randomly insert
 
         """
         self.memory = []
@@ -55,6 +57,9 @@ class ReplayBuffer(Dataset):
         # store the device
         self.device = device
         self.storage_device = self.device if store_on_device else torch.device("cpu")
+
+        # random rollover
+        self.random_rollover = random_rollover
 
         # store the mode
         if mode == "numpy":
@@ -169,7 +174,6 @@ class ReplayBuffer(Dataset):
         self,
         data: Sequence[torch.Tensor | np.ndarray | float | int | bool],
         bulk: bool = False,
-        random_rollover: bool = False,
     ):
         """Adds transition tuples into the replay buffer.
 
@@ -181,7 +185,6 @@ class ReplayBuffer(Dataset):
         ----
             data (Sequence[torch.Tensor | np.ndarray | float | int | bool]): data
             bulk (bool): whether to bulk add stuff into the replay buffer
-            random_rollover (bool): whether to rollover the data in the replay buffer once full or to randomly insert
 
         """
         # cast to dtype and conditionally add batch dim
@@ -253,7 +256,7 @@ class ReplayBuffer(Dataset):
         start = self.count % self.mem_size
         stop = min(start + bulk_size, self.mem_size)
         rollover = -(self.mem_size - start - bulk_size)
-        if random_rollover:
+        if self.random_rollover:
             if not self.is_full:
                 idx_front = np.arange(start, stop)
                 idk_back = np.random.choice(
