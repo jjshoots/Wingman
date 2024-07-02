@@ -187,6 +187,11 @@ class ReplayBuffer(Dataset):
         # cast to dtype and conditionally add batch dim
         array_data = [self._format_data(item, bulk=True) for item in data]
 
+        # if nothing in the array, we can safely return
+        # this can occur for example, when we do `memory.push([np.array([])])`
+        if all([len(item) == 0 for item in array_data]):
+            return
+
         if not bulk:
             bulk_size = 1
         else:
