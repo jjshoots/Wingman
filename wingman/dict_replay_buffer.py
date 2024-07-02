@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from enum import Enum
-from typing import Generator, Literal, Sequence
+from typing import Literal, Sequence
 
 import numpy as np
-from prefetch_generator import prefetch
 
 from wingman.exceptions import ReplayBufferException
 from wingman.replay_buffer import ReplayBuffer
@@ -19,13 +17,13 @@ except ImportError as e:
         "Could not import torch, this is not bundled as part of Wingman and has to be installed manually."
     ) from e
 
-from .print_utils import cstr, wm_print
 
 class DictReplayBuffer(ReplayBuffer):
     """Replay Buffer implementation that also allows taking in nested dicts.
 
     Only dictionaries with depth of 1 are accepted at the moment.
     """
+
     def __init__(
         self,
         mem_size: int,
@@ -50,7 +48,14 @@ class DictReplayBuffer(ReplayBuffer):
 
     def push(
         self,
-        data: Sequence[dict[str, torch.Tensor| np.ndarray| float| int| bool] | torch.Tensor | np.ndarray | float | int | bool],
+        data: Sequence[
+            dict[str, torch.Tensor | np.ndarray | float | int | bool]
+            | torch.Tensor
+            | np.ndarray
+            | float
+            | int
+            | bool
+        ],
         bulk: bool = False,
     ):
         if self.count == 0:
@@ -85,24 +90,43 @@ class DictReplayBuffer(ReplayBuffer):
 
                         # make sure that the mapping is a dict
                         if not isinstance(mapping, dict):
-                            raise ReplayBufferException(f"Did not expect a dict in position {i} of the inserted data.")
+                            raise ReplayBufferException(
+                                f"Did not expect a dict in position {i} of the inserted data."
+                            )
 
                         # insert the data into the position specified by the mapping
                         flattened_data[mapping[key]] = value
 
             else:
-                raise NotImplementedError(f"Don't know how to deal with type {type(item)} with data:\n{item}.")
+                raise NotImplementedError(
+                    f"Don't know how to deal with type {type(item)} with data:\n{item}."
+                )
 
         # insert the flattened data normally
         super().push(flattened_data, bulk=bulk)
 
-
-    def sample(self, batch_size: int) -> Sequence[dict[str, torch.Tensor| np.ndarray| float| int| bool] | torch.Tensor | np.ndarray | float | int | bool]:
+    def sample(
+        self, batch_size: int
+    ) -> Sequence[
+        dict[str, torch.Tensor | np.ndarray | float | int | bool]
+        | torch.Tensor
+        | np.ndarray
+        | float
+        | int
+        | bool
+    ]:
         # sample some flattened data
         flattened_data = super().sample(batch_size=batch_size)
 
         # unflatten the data
-        data: list[dict[str, torch.Tensor| np.ndarray| float| int| bool] | torch.Tensor | np.ndarray | float | int | bool] = []
+        data: list[
+            dict[str, torch.Tensor | np.ndarray | float | int | bool]
+            | torch.Tensor
+            | np.ndarray
+            | float
+            | int
+            | bool
+        ] = []
 
         for mapping in self.idx_to_key:
             # if int, normal unpacking
