@@ -9,10 +9,10 @@ import numpy as np
 from prefetch_generator import prefetch
 
 from wingman.exceptions import ReplayBufferException
+from wingman.replay_buffer.core import ReplayBuffer
 
 try:
     import torch
-    from torch.utils.data import Dataset
 except ImportError as e:
     raise ImportError(
         "Could not import torch, this is not bundled as part of Wingman and has to be installed manually."
@@ -28,7 +28,7 @@ class _Mode(Enum):
     NUMPY = 2
 
 
-class ReplayBuffer(Dataset):
+class FlatReplayBuffer(ReplayBuffer):
     """Replay Buffer implementation of a Torch or Numpy dataset."""
 
     def __init__(
@@ -50,9 +50,7 @@ class ReplayBuffer(Dataset):
             random_rollover (bool): whether to rollover the data in the replay buffer once full or to randomly insert
 
         """
-        self.memory = []
-        self.mem_size = int(mem_size)
-        self.count = 0
+        super().__init__(mem_size=mem_size)
 
         # store the device
         self.device = device
@@ -77,16 +75,6 @@ class ReplayBuffer(Dataset):
                 f"Unknown mode {mode}. Only `'numpy'` and `'torch'` are allowed."
             )
 
-    def __len__(self) -> int:
-        """The number of memory items this replay buffer is holding.
-
-        Returns
-        -------
-            int:
-
-        """
-        return min(self.mem_size, self.count)
-
     def __getitem__(self, idx: int) -> list[np.ndarray | torch.Tensor]:
         """__getitem__.
 
@@ -100,31 +88,6 @@ class ReplayBuffer(Dataset):
 
         """
         return list(d[idx] for d in self.memory)
-
-    def __repr__(self) -> str:
-        """Printouts parameters of this replay buffer.
-
-        Returns
-        -------
-            str:
-
-        """
-        return f"""ReplayBuffer of size {self.mem_size} with {len(self.memory)} elements. \n
-        Element shapes are {[elem.shape[1:] for elem in self.memory]}. \n
-        A brief view of the memory: \n
-        {self.memory}
-        """
-
-    @property
-    def is_full(self) -> bool:
-        """Whether or not the replay buffer has reached capacity.
-
-        Returns
-        -------
-            bool: whether the buffer is full
-
-        """
-        return self.count >= self.mem_size
 
     def _format_data(
         self, thing: np.ndarray | torch.Tensor | float | int | bool, bulk: bool
@@ -297,22 +260,3 @@ class ReplayBuffer(Dataset):
             return [item[idx].to(self.device) for item in self.memory]
         else:
             return [item[idx] for item in self.memory]
-
-    @prefetch(max_prefetch=1)
-    def iter_sample(
-        self, batch_size: int, num_iter: int
-    ) -> Generator[list[np.ndarray | torch.Tensor], None, None]:
-        """iter_sample.
-
-        Args:
-        ----
-            batch_size (int): batch_size
-            num_iter (int): num_iter
-
-        Returns:
-        -------
-            Generator[list[np.ndarray | torch.Tensor], None, None]:
-
-        """
-        for _ in range(num_iter):
-            yield (self.sample(batch_size=batch_size))
