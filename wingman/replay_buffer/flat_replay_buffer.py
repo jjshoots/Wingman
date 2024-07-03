@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Generator, Literal, Sequence
+from typing import Literal, Sequence
 
 import numpy as np
-from prefetch_generator import prefetch
 
 from wingman.exceptions import ReplayBufferException
 from wingman.replay_buffer.core import ReplayBuffer
@@ -18,7 +17,7 @@ except ImportError as e:
         "Could not import torch, this is not bundled as part of Wingman and has to be installed manually."
     ) from e
 
-from .print_utils import cstr, wm_print
+from wingman.print_utils import cstr, wm_print
 
 
 class _Mode(Enum):

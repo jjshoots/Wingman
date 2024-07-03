@@ -1,6 +1,9 @@
+"""Wrapper to convert a FlatReplayBuffer into one that accepts nested dicts."""
+
+from typing import Any, Mapping, Sequence, Union
+
 import numpy as np
-from typing import Any, Mapping, Sequence, TypedDict, Union
-from src.test_flatten import _unpack_dict_mapping
+
 from wingman.exceptions import ReplayBufferException
 from wingman.replay_buffer.core import ReplayBufferWrapper
 from wingman.replay_buffer.flat_replay_buffer import FlatReplayBuffer
@@ -14,18 +17,22 @@ except ImportError as e:
 
 _NestedDict = Mapping[str, Union[int, "_NestedDict"]]
 
-class DictReplayBufferWrapper(ReplayBufferWrapper)
+
+class DictReplayBufferWrapper(ReplayBufferWrapper):
     """Replay Buffer Wrapper that allows the underlying replay buffer to take in nested dicts."""
 
     def __init__(self, replay_buffer: FlatReplayBuffer) -> None:
         """__init__.
 
         Args:
+        ----
             self:
             replay_buffer (FlatReplayBuffer): replay_buffer
 
         Returns:
+        -------
             None:
+
         """
         super().__init__(replay_buffer)
 
@@ -45,18 +52,23 @@ class DictReplayBufferWrapper(ReplayBufferWrapper)
         """Recursively unpacks a dictionary into a mapping.
 
         Args:
+        ----
             data_dict (dict[str, np.ndarray | torch.Tensor]): data_dict
             start_idx (int): start_idx
 
         Returns:
+        -------
             tuple[_NestedDict, int]:
+
         """
         mapping: _NestedDict = dict()
         idx = start_idx
 
         for key, value in data_dict.items():
             if isinstance(value, dict):
-                mapping[key], idx = DictReplayBufferWrapper._unpack_dict_mapping(value, start_idx=idx)
+                mapping[key], idx = DictReplayBufferWrapper._unpack_dict_mapping(
+                    value, start_idx=idx
+                )
             else:
                 mapping[key] = idx
                 idx += 1
@@ -65,7 +77,14 @@ class DictReplayBufferWrapper(ReplayBufferWrapper)
 
     @staticmethod
     def _generate_mapping(
-        wrapped_data: Sequence[dict[str, np.ndarray | torch.Tensor] | np.ndarray | torch.Tensor | float | int | bool],
+        wrapped_data: Sequence[
+            dict[str, np.ndarray | torch.Tensor]
+            | np.ndarray
+            | torch.Tensor
+            | float
+            | int
+            | bool
+        ],
     ) -> tuple[list[int | _NestedDict], int]:
         """Generates a mapping from wrapped data.
 
@@ -107,23 +126,28 @@ class DictReplayBufferWrapper(ReplayBufferWrapper)
             ]
 
         Args:
+        ----
             wrapped_data (Sequence[dict[str, np.ndarray | torch.Tensor] | np.ndarray | torch.Tensor | float | int | bool]): wrapped_data
 
         Returns:
+        -------
             tuple[list[int | _NestedDict], int]:
+
         """
         mapping: list[int | _NestedDict] = []
         idx = 0
 
         for item in wrapped_data:
             if isinstance(item, dict):
-                dict_mapping, idx = DictReplayBufferWrapper._unpack_dict_mapping(item, start_idx=idx)
+                dict_mapping, idx = DictReplayBufferWrapper._unpack_dict_mapping(
+                    item, start_idx=idx
+                )
                 mapping.append(dict_mapping)
             else:
                 mapping.append(idx)
                 idx += 1
 
-        return mapping, idx - 1
+        return mapping, idx
 
     @staticmethod
     def _unpack_dict_data(
@@ -134,12 +158,15 @@ class DictReplayBufferWrapper(ReplayBufferWrapper)
         """Recursively unpacks dictionary data into a sequence of items that FlatReplayBuffer can use.
 
         Args:
+        ----
             data_dict (dict[str, np.ndarray | torch.Tensor]): data_dict
             unwrapped_data_target (list[Any]): unwrapped_data_target
             mapping (_NestedDict): mapping
 
         Returns:
+        -------
             list[Any]:
+
         """
         for key, value in data_dict.items():
             if isinstance((idx_map := mapping[key]), int):
@@ -158,23 +185,32 @@ class DictReplayBufferWrapper(ReplayBufferWrapper)
                     mapping=idx_map,
                 )
             else:
-                raise ValueError(f"Not supposed to be here")
+                raise ValueError("Not supposed to be here")
 
         return unwrapped_data_target
 
-
-    def unwrap_data(self, wrapped_data: Sequence[dict[str, Any] | np.ndarray | torch.Tensor | float | int | bool]) -> Sequence[np.ndarray | torch.Tensor | float | int | bool]:
+    def unwrap_data(
+        self,
+        wrapped_data: Sequence[
+            dict[str, Any] | np.ndarray | torch.Tensor | float | int | bool
+        ],
+    ) -> Sequence[np.ndarray | torch.Tensor | float | int | bool]:
         """Unwraps dictionary data into a sequence of items that FlatReplayBuffer can use.
 
         Args:
+        ----
             self:
             wrapped_data (Sequence[dict[str, Any] | np.ndarray | torch.Tensor | float | int | bool]): wrapped_data
 
         Returns:
+        -------
             Sequence[np.ndarray | torch.Tensor | float | int | bool]:
+
         """
         if len(self) == 0:
-            self.mapping, self.total_elements = self._generate_mapping(wrapped_data=wrapped_data)
+            self.mapping, self.total_elements = self._generate_mapping(
+                wrapped_data=wrapped_data
+            )
 
         if len(self.mapping) != len(wrapped_data):
             raise ReplayBufferException(
@@ -204,6 +240,8 @@ class DictReplayBufferWrapper(ReplayBufferWrapper)
                     mapping=mapping,
                 )
 
+        return unwrapped_data
+
     @staticmethod
     def _pack_dict_data(
         unwrapped_data: Sequence[Any],
@@ -212,11 +250,14 @@ class DictReplayBufferWrapper(ReplayBufferWrapper)
         """Packs back a sequence of items into a dictionary structure according to a mapping.
 
         Args:
+        ----
             unwrapped_data (Sequence[Any]): unwrapped_data
             mapping (_NestedDict): mapping
 
         Returns:
+        -------
             dict[str, Any]:
+
         """
         data_dict = dict()
         for key, idx_map in mapping.items():
@@ -228,19 +269,31 @@ class DictReplayBufferWrapper(ReplayBufferWrapper)
                     mapping=idx_map,
                 )
             else:
-                raise ValueError(f"Not supposed to be here")
+                raise ValueError("Not supposed to be here")
 
         return data_dict
 
-    def wrap_data(self, unwrapped_data: Sequence[np.ndarray | torch.Tensor | float | int | bool]) -> Sequence[dict[str, np.ndarray | torch.Tensor] | np.ndarray | torch.Tensor | float | int | bool]:
+    def wrap_data(
+        self, unwrapped_data: Sequence[np.ndarray | torch.Tensor | float | int | bool]
+    ) -> Sequence[
+        dict[str, np.ndarray | torch.Tensor]
+        | np.ndarray
+        | torch.Tensor
+        | float
+        | int
+        | bool
+    ]:
         """Converts a sequence of items into a dictionary structure that is similar to that used during `push`.
 
         Args:
+        ----
             self:
             unwrapped_data (Sequence[np.ndarray | torch.Tensor | float | int | bool]): unwrapped_data
 
         Returns:
+        -------
             Sequence[dict[str, np.ndarray | torch.Tensor] | np.ndarray | torch.Tensor | float | int | bool]:
+
         """
         wrapped_data: list[Any] = [None] * len(self.mapping)
 
@@ -253,8 +306,6 @@ class DictReplayBufferWrapper(ReplayBufferWrapper)
                     mapping=idx_map,
                 )
             else:
-                raise ValueError(f"Not supposed to be here")
+                raise ValueError("Not supposed to be here")
 
         return wrapped_data
-
-

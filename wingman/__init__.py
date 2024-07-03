@@ -1,12 +1,12 @@
 """The main Wingman package."""
 
 # ruff: noqa: F401
-from .wingman import Wingman
+from .wingman import Wingman as Wingman
 
 try:
     import torch as _
 
-    from .neural_blocks import NeuralBlocks
+    from .neural_blocks import NeuralBlocks as NeuralBlocks
 except ImportError:
     import warnings
 

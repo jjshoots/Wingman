@@ -3,25 +3,21 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from enum import Enum
-from typing import Any, Generator, Literal, Sequence
+from typing import Any, Generator, Sequence
 
-import numpy as np
 from prefetch_generator import prefetch
 
-from wingman.exceptions import ReplayBufferException
 
-from .print_utils import cstr, wm_print
-
-
-class ReplayBuffer():
+class ReplayBuffer:
     """Base replay buffer class."""
 
     def __init__(self, mem_size: int):
         """__init__.
 
         Args:
+        ----
             mem_size (int): mem_size
+
         """
         self.memory = []
         self.mem_size = int(mem_size)
@@ -54,10 +50,13 @@ class ReplayBuffer():
         """__getitem__.
 
         Args:
+        ----
             idx (int): idx
 
         Returns:
+        -------
             Sequence[Any]:
+
         """
         raise NotImplementedError
 
@@ -100,11 +99,14 @@ class ReplayBuffer():
         """push.
 
         Args:
+        ----
             data (Sequence[Any]): data
             bulk (bool): bulk
 
         Returns:
+        -------
             None:
+
         """
         raise NotImplementedError
 
@@ -113,23 +115,27 @@ class ReplayBuffer():
         """sample.
 
         Args:
+        ----
             batch_size (int): batch_size
 
         Returns:
+        -------
             Sequence[Any]:
+
         """
         raise NotImplementedError
 
 
 class ReplayBufferWrapper(ReplayBuffer):
-    """ReplayBufferWrapper.
-    """
+    """ReplayBufferWrapper."""
 
     def __init__(self, base_buffer: ReplayBuffer):
         """__init__.
 
         Args:
+        ----
             base_buffer (ReplayBuffer): base_buffer
+
         """
         self.base_buffer = base_buffer
 
@@ -160,10 +166,13 @@ class ReplayBufferWrapper(ReplayBuffer):
         """__getitem__.
 
         Args:
+        ----
             idx (int): idx
 
         Returns:
+        -------
             Sequence[Any]:
+
         """
         return self.wrap_data(self.base_buffer[idx])
 
@@ -186,11 +195,14 @@ class ReplayBufferWrapper(ReplayBuffer):
         """push.
 
         Args:
+        ----
             data (Sequence[Any]): data
             bulk (bool): bulk
 
         Returns:
+        -------
             None:
+
         """
         self.base_buffer.push(data=self.unwrap_data(data), bulk=bulk)
 
@@ -198,10 +210,13 @@ class ReplayBufferWrapper(ReplayBuffer):
         """sample.
 
         Args:
+        ----
             batch_size (int): batch_size
 
         Returns:
+        -------
             Sequence[Any]:
+
         """
         return self.wrap_data(self.base_buffer.sample(batch_size=batch_size))
 
@@ -210,10 +225,13 @@ class ReplayBufferWrapper(ReplayBuffer):
         """Unwraps data from the underlying data into an unwrapped format.
 
         Args:
+        ----
             wrapped_data (Sequence[Any]): wrapped_data
 
         Returns:
+        -------
             Sequence[Any]:
+
         """
         raise NotImplementedError
 
@@ -222,9 +240,12 @@ class ReplayBufferWrapper(ReplayBuffer):
         """Wraps data from the underlying data into a wrapped format.
 
         Args:
+        ----
             unwrapped_data (Sequence[Any]): unwrapped_data
 
         Returns:
+        -------
             Sequence[Any]:
+
         """
         raise NotImplementedError
