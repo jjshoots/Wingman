@@ -9,16 +9,15 @@ from typing import Any, Literal
 
 import pytest
 import torch
-
-from wingman.replay_buffer import FlatReplayBuffer
-from wingman.replay_buffer.core import ReplayBuffer
-from wingman.replay_buffer.wrappers.dict_wrapper import DictReplayBufferWrapper
-
 from utils import (
     are_equivalent_sequences,
     generate_random_dict_data,
     generate_random_flat_data,
 )
+
+from wingman.replay_buffer import FlatReplayBuffer
+from wingman.replay_buffer.core import ReplayBuffer
+from wingman.replay_buffer.wrappers.dict_wrapper import DictReplayBufferWrapper
 
 
 def create_shapes(
@@ -59,18 +58,12 @@ def create_shapes(
             {
                 "e": (*bulk_shape, 3, 2),
             },
-            (
-                *bulk_shape,
-                4,
-            ),
+            (*bulk_shape, 4),
         ]
     else:
         return [
             (*bulk_shape, 3, 3),
-            (
-                *bulk_shape,
-                3,
-            ),
+            (*bulk_shape, 3),
             (*bulk_shape,),
         ]
 
@@ -191,7 +184,7 @@ def test_bulk(
 
         for step in range(bulk_size):
             item1 = reversed_data[step]
-            item2 = memory.__getitem__((iteration * bulk_size + step) % mem_size)
+            item2 = memory[(iteration * bulk_size + step) % mem_size]
             assert are_equivalent_sequences(
                 item1, item2
             ), f"""Something went wrong with rollover at iteration {iteration},
@@ -261,7 +254,7 @@ def test_non_bulk(
 
         # check the previous data
         if iteration > 0:
-            output = memory.__getitem__((iteration - 1) % mem_size)
+            output = memory[(iteration - 1) % mem_size]
             assert are_equivalent_sequences(
                 output, previous_data
             ), f"""Something went wrong with rollover at iteration {iteration},
