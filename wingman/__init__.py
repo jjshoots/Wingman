@@ -7,7 +7,6 @@ try:
     import torch as _
 
     from .neural_blocks import NeuralBlocks
-    from .replay_buffer import ReplayBuffer
 except ImportError:
     import warnings
 

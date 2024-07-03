@@ -240,7 +240,7 @@ The Neural Blocks module also has functions that can generate single modules, re
 
 <br>
 
-### `from wingman import ReplayBuffer`
+### `from wingman.replay_buffer import FlatReplayBuffer as ReplayBuffer`
 
 This is a replay buffer designed around Torch's Dataloader class for reinforcement learning projects.
 This allows easy bootstrapping of the Dataloader's excellent shuffling and pre-batching capabilities.
@@ -253,7 +253,7 @@ The basic usage of the ReplayBuffer is as follows:
 ```python
 import torch
 
-from wingman import ReplayBuffer
+from wingman.replay_buffer import FlatReplayBuffer as ReplayBuffer
 
 # we define the replay buffer to be able to store 1000 tuples of information
 memory = ReplayBuffer(mem_size=1000)

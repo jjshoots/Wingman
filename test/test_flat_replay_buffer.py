@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 import torch
 
-from wingman.replay_buffer import ReplayBuffer
+from wingman.replay_buffer import FlatReplayBuffer
 
 
 def _cast(array: np.ndarray | torch.Tensor | float | int) -> np.ndarray:
@@ -114,7 +114,7 @@ def test_bulk(
     bulk_size = 7
     mem_size = 11
     element_shapes = [(3, 3), (3,), ()]
-    memory = ReplayBuffer(
+    memory = FlatReplayBuffer(
         mem_size=mem_size,
         mode=mode,
         device=device,
@@ -171,7 +171,7 @@ def test_non_bulk(
     """Tests the replay buffer generically."""
     mem_size = 11
     element_shapes = [(3, 3), (3,), ()]
-    memory = ReplayBuffer(
+    memory = FlatReplayBuffer(
         mem_size=mem_size,
         mode=mode,
         device=device,
