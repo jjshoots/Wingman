@@ -46,20 +46,6 @@ class ReplayBuffer:
         {self.memory}
         """
 
-    def __getitem__(self, idx: int) -> Sequence[Any]:
-        """__getitem__.
-
-        Args:
-        ----
-            idx (int): idx
-
-        Returns:
-        -------
-            Sequence[Any]:
-
-        """
-        raise NotImplementedError
-
     @property
     def is_full(self) -> bool:
         """Whether or not the replay buffer has reached capacity.
@@ -91,6 +77,21 @@ class ReplayBuffer:
             yield (self.sample(batch_size=batch_size))
 
     @abstractmethod
+    def sample(self, batch_size: int) -> Sequence[Any]:
+        """sample.
+
+        Args:
+        ----
+            batch_size (int): batch_size
+
+        Returns:
+        -------
+            Sequence[Any]:
+
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def push(
         self,
         data: Sequence[Any],
@@ -111,12 +112,12 @@ class ReplayBuffer:
         raise NotImplementedError
 
     @abstractmethod
-    def sample(self, batch_size: int) -> Sequence[Any]:
-        """sample.
+    def __getitem__(self, idx: int) -> Sequence[Any]:
+        """__getitem__.
 
         Args:
         ----
-            batch_size (int): batch_size
+            idx (int): idx
 
         Returns:
         -------
