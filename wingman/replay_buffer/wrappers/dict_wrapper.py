@@ -1,5 +1,7 @@
 """Wrapper to convert a FlatReplayBuffer into one that accepts nested dicts."""
 
+from __future__ import annotations
+
 from typing import Any, Mapping, Sequence, Union
 
 import numpy as np
