@@ -252,8 +252,10 @@ class FlatReplayBuffer(ReplayBuffer):
             list[np.ndarray | torch.Tensor]:
 
         """
-        idx = np.random.choice(
-            len(self), size=np.minimum(len(self), batch_size), replace=False
+        idx = np.random.randint(
+            0,
+            len(self),
+            size=np.minimum(len(self), batch_size),
         )
         if self.mode == _Mode.TORCH:
             return [item[idx].to(self.device) for item in self.memory]
