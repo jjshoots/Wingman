@@ -232,7 +232,7 @@ class FlatReplayBuffer(ReplayBuffer):
         else:
             idx_front = np.arange(start, stop)
             idk_back = np.arange(0, rollover)
-        idx = np.append(idx_front, idk_back).astype(np.int64)
+        idx = np.concatenate((idx_front, idk_back), axis=0)
 
         # put things in memory
         for memory, item in zip(self.memory, array_data):
