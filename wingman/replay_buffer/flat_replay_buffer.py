@@ -221,18 +221,22 @@ class FlatReplayBuffer(ReplayBuffer):
         if self.random_rollover:
             if not self.is_full:
                 idx_front = np.arange(start, stop)
-                idk_back = np.random.choice(
-                    start, size=np.maximum(rollover, 0), replace=False
+                idx_back = np.random.choice(
+                    start,
+                    size=np.maximum(rollover, 0),
+                    replace=False,
                 )
             else:
                 idx_front = np.random.choice(
-                    self.mem_size, size=bulk_size, replace=False
+                    self.mem_size,
+                    size=bulk_size,
+                    replace=False,
                 )
-                idk_back = []
+                idx_back = np.array([], dtype=np.int64)
         else:
             idx_front = np.arange(start, stop)
-            idk_back = np.arange(0, rollover)
-        idx = np.concatenate((idx_front, idk_back), axis=0)
+            idx_back = np.arange(0, rollover)
+        idx = np.concatenate((idx_front, idx_back), axis=0)
 
         # put things in memory
         for memory, item in zip(self.memory, array_data):
