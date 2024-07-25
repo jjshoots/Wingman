@@ -1,3 +1,5 @@
+"""Some replay buffer utilities."""
+
 from __future__ import annotations
 
 from typing import Literal
@@ -14,15 +16,21 @@ except ImportError as e:
         "Could not import torch, this is not bundled as part of Wingman and has to be installed manually."
     ) from e
 
-def flat_rb_swap_mode(replay_buffer: FlatReplayBuffer, mode: Literal["numpy", "torch"]) -> FlatReplayBuffer:
+
+def flat_rb_swap_mode(
+    replay_buffer: FlatReplayBuffer, mode: Literal["numpy", "torch"]
+) -> FlatReplayBuffer:
     """Swaps the mode of a flat replay buffer, useful for pushing and sampling in episodic contexts from numpy to torch.
 
     Args:
+    ----
         replay_buffer (FlatReplayBuffer): replay_buffer
         mode (Literal["numpy", "torch"]): mode
 
     Returns:
+    -------
         FlatReplayBuffer:
+
     """
     # grab the original mode first
     original_mode = replay_buffer.mode
@@ -50,13 +58,12 @@ def flat_rb_swap_mode(replay_buffer: FlatReplayBuffer, mode: Literal["numpy", "t
             torch.asarray(
                 data,
                 dtype=replay_buffer.mode_dtype,  # pyright: ignore[reportArgumentType]
-                device=replay_buffer.storage_device
-            ) for data in replay_buffer.memory
+                device=replay_buffer.storage_device,
+            )
+            for data in replay_buffer.memory
         ]
     elif original_mode == _Mode.TORCH and replay_buffer.mode == _Mode.NUMPY:
         # torch to numpy conversion
-        replay_buffer.memory = [
-            data.cpu().numpy() for data in replay_buffer.memory
-        ]
+        replay_buffer.memory = [data.cpu().numpy() for data in replay_buffer.memory]
 
     return replay_buffer
