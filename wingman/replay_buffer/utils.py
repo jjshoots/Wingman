@@ -7,6 +7,7 @@ from typing import Literal
 import numpy as np
 
 from wingman.exceptions import ReplayBufferException
+from wingman.replay_buffer.core import ReplayBuffer
 from wingman.replay_buffer.flat_replay_buffer import FlatReplayBuffer, _Mode
 
 try:
@@ -18,52 +19,64 @@ except ImportError as e:
 
 
 def flat_rb_swap_mode(
-    replay_buffer: FlatReplayBuffer, mode: Literal["numpy", "torch"] | int
-) -> FlatReplayBuffer:
-    """Swaps the mode of a flat replay buffer, useful for pushing and sampling in episodic contexts from numpy to torch.
+    replay_buffer: ReplayBuffer, mode: Literal["numpy", "torch"] | int
+) -> ReplayBuffer:
+    """Swaps the mode of a replay buffer that has an underlying flat replay buffer.
+
+    Useful for pushing and sampling in episodic contexts from numpy to torch.
 
     Args:
     ----
-        replay_buffer (FlatReplayBuffer): replay_buffer
+        replay_buffer (ReplayBuffer): replay_buffer
         mode (Literal["numpy", "torch"]): mode
 
     Returns:
     -------
-        FlatReplayBuffer:
+        ReplayBuffer:
 
     """
+
+    # we want the internal flat replay buffer
+    flat_rb_handle = replay_buffer
+    while not isinstance(flat_rb_handle, FlatReplayBuffer):
+        flat_rb_handle = getattr(flat_rb_handle, "base_buffer", None)
+        if flat_rb_handle is None:
+            raise ReplayBufferException(
+                f"This replay buffer does not have a flat buffer internally."
+            )
+
     # grab the original mode first
-    original_mode = replay_buffer.mode
+    original_mode = flat_rb_handle.mode
 
     # store the mode
     if mode == "numpy" or mode == _Mode.NUMPY:
-        replay_buffer.mode = _Mode.NUMPY
-        replay_buffer.mode_type = np.ndarray
-        replay_buffer.mode_caller = np  # pyright: ignore[reportAttributeAccessIssue]
-        replay_buffer.mode_dtype = np.float32
+        flat_rb_handle.mode = _Mode.NUMPY
+        flat_rb_handle.mode_type = np.ndarray
+        flat_rb_handle.mode_caller = np  # pyright: ignore[reportAttributeAccessIssue]
+        flat_rb_handle.mode_dtype = np.float32
     elif mode == "torch" or mode == _Mode.TORCH:
-        replay_buffer.mode = _Mode.TORCH
-        replay_buffer.mode_type = torch.Tensor
-        replay_buffer.mode_caller = torch  # pyright: ignore[reportAttributeAccessIssue]
-        replay_buffer.mode_dtype = torch.float32
+        flat_rb_handle.mode = _Mode.TORCH
+        flat_rb_handle.mode_type = torch.Tensor
+        flat_rb_handle.mode_caller = torch  # pyright: ignore[reportAttributeAccessIssue]
+        flat_rb_handle.mode_dtype = torch.float32
     else:
         raise ReplayBufferException(
             f"Unknown mode {mode}. Only `'numpy'` and `'torch'` are allowed."
         )
 
     # convert over the memory buffer
-    if original_mode == _Mode.NUMPY and replay_buffer.mode == _Mode.TORCH:
+    if original_mode == _Mode.NUMPY and flat_rb_handle.mode == _Mode.TORCH:
         # numpy to torch conversion
-        replay_buffer.memory = [
+        flat_rb_handle.memory = [
             torch.asarray(
                 data,
-                dtype=replay_buffer.mode_dtype,  # pyright: ignore[reportArgumentType]
-                device=replay_buffer.storage_device,
+                dtype=flat_rb_handle.mode_dtype,  # pyright: ignore[reportArgumentType]
+                device=flat_rb_handle.storage_device,
             )
-            for data in replay_buffer.memory
+            for data in flat_rb_handle.memory
         ]
-    elif original_mode == _Mode.TORCH and replay_buffer.mode == _Mode.NUMPY:
+    elif original_mode == _Mode.TORCH and flat_rb_handle.mode == _Mode.NUMPY:
         # torch to numpy conversion
-        replay_buffer.memory = [data.cpu().numpy() for data in replay_buffer.memory]
+        flat_rb_handle.memory = [data.cpu().numpy() for data in flat_rb_handle.memory]
 
     return replay_buffer
