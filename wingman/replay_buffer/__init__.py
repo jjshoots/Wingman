@@ -2,3 +2,4 @@
 
 from .core import ReplayBuffer as ReplayBuffer
 from .flat_replay_buffer import FlatReplayBuffer as FlatReplayBuffer
+from .utils import flat_rb_swap_mode
