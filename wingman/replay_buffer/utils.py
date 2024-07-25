@@ -18,7 +18,7 @@ except ImportError as e:
 
 
 def flat_rb_swap_mode(
-    replay_buffer: FlatReplayBuffer, mode: Literal["numpy", "torch"]
+    replay_buffer: FlatReplayBuffer, mode: Literal["numpy", "torch"] | int
 ) -> FlatReplayBuffer:
     """Swaps the mode of a flat replay buffer, useful for pushing and sampling in episodic contexts from numpy to torch.
 
@@ -36,12 +36,12 @@ def flat_rb_swap_mode(
     original_mode = replay_buffer.mode
 
     # store the mode
-    if mode == "numpy":
+    if mode == "numpy" or mode == _Mode.NUMPY:
         replay_buffer.mode = _Mode.NUMPY
         replay_buffer.mode_type = np.ndarray
         replay_buffer.mode_caller = np  # pyright: ignore[reportAttributeAccessIssue]
         replay_buffer.mode_dtype = np.float32
-    elif mode == "torch":
+    elif mode == "torch" or mode == _Mode.TORCH:
         replay_buffer.mode = _Mode.TORCH
         replay_buffer.mode_type = torch.Tensor
         replay_buffer.mode_caller = torch  # pyright: ignore[reportAttributeAccessIssue]
