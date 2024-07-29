@@ -196,13 +196,14 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
         wrapped_data: Sequence[
             dict[str, Any] | np.ndarray | torch.Tensor | float | int | bool
         ],
+        bulk: bool,
     ) -> Sequence[np.ndarray | torch.Tensor | float | int | bool]:
         """Unwraps dictionary data into a sequence of items that FlatReplayBuffer can use.
 
         Args:
         ----
-            self:
             wrapped_data (Sequence[dict[str, Any] | np.ndarray | torch.Tensor | float | int | bool]): wrapped_data
+            bulk (bool): bulk
 
         Returns:
         -------
@@ -222,6 +223,8 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
 
         # holder for the unwrapped data
         unwrapped_data: list[Any] = [None] * self.total_elements
+
+        # TODO: recursively pack dictionary data when using bulk
 
         for i, (mapping, data_item) in enumerate(zip(self.mapping, wrapped_data)):
             # if the mapping says it's an int, then just set the data without nestint
