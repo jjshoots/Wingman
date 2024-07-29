@@ -26,6 +26,8 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
     def __init__(self, replay_buffer: FlatReplayBuffer) -> None:
         """__init__.
 
+        If bulk adding items, this expects dictionary items to be a list of dictionaries, NOT a dictionary of lists.
+
         Args:
         ----
             self:
@@ -47,7 +49,48 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
         self.total_elements = 0
 
     @staticmethod
-    def _unpack_dict_mapping(
+    def _recursive_invert_listed_dict(
+        listed_dicts: Sequence[
+            dict[str, np.ndarray | torch.Tensor]
+            | np.ndarray
+            | torch.Tensor
+            | float
+            | int
+            | bool
+        ],
+    ) -> (
+        dict[
+            str,
+            Sequence[np.ndarray | torch.Tensor | float | int | bool],
+        ]
+        | Sequence[
+            dict[str, np.ndarray | torch.Tensor]
+            | np.ndarray
+            | torch.Tensor
+            | float
+            | int
+            | bool
+        ]
+    ):
+        # if the item in the list is not a dictionary,
+        # we can just stack the output and return it
+        if not isinstance(listed_dicts[0], dict):
+            return [item for item in listed_dicts]
+
+        # at this point, the items in the list are dicts
+        # so we need to recursively invert it
+        # if the first item is a dict, we expect that every other item in the listed_dicts is a dict
+        # with the same keys
+        dicted_lists = dict()
+        for key in listed_dicts[0].keys():
+            dicted_lists[key] = DictReplayBufferWrapper._recursive_invert_listed_dict(
+                [ld[key] for ld in listed_dicts]  # pyright: ignore[reportIndexIssue]
+            )
+
+        return dicted_lists
+
+    @staticmethod
+    def _recursive_unpack_dict_mapping(
         data_dict: dict[str, np.ndarray | torch.Tensor],
         start_idx: int,
     ) -> tuple[_NestedDict, int]:
@@ -68,8 +111,10 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
 
         for key, value in data_dict.items():
             if isinstance(value, dict):
-                mapping[key], idx = DictReplayBufferWrapper._unpack_dict_mapping(
-                    value, start_idx=idx
+                mapping[key], idx = (
+                    DictReplayBufferWrapper._recursive_unpack_dict_mapping(
+                        value, start_idx=idx
+                    )
                 )
             else:
                 mapping[key] = idx
@@ -141,8 +186,10 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
 
         for item in wrapped_data:
             if isinstance(item, dict):
-                dict_mapping, idx = DictReplayBufferWrapper._unpack_dict_mapping(
-                    item, start_idx=idx
+                dict_mapping, idx = (
+                    DictReplayBufferWrapper._recursive_unpack_dict_mapping(
+                        item, start_idx=idx
+                    )
                 )
                 mapping.append(dict_mapping)
             else:
@@ -152,7 +199,7 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
         return mapping, idx
 
     @staticmethod
-    def _unpack_dict_data(
+    def _recursive_unpack_dict_data(
         data_dict: dict[str, np.ndarray | torch.Tensor],
         unwrapped_data_target: list[Any],
         mapping: _NestedDict,
@@ -181,10 +228,12 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
                         f"Expected a dictionary for key {key} within the data, but got {type(value)}."
                     )
 
-                unwrapped_data_target = DictReplayBufferWrapper._unpack_dict_data(
-                    data_dict=value,
-                    unwrapped_data_target=unwrapped_data_target,
-                    mapping=idx_map,
+                unwrapped_data_target = (
+                    DictReplayBufferWrapper._recursive_unpack_dict_data(
+                        data_dict=value,
+                        unwrapped_data_target=unwrapped_data_target,
+                        mapping=idx_map,
+                    )
                 )
             else:
                 raise ValueError("Not supposed to be here")
@@ -194,11 +243,19 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
     def unwrap_data(
         self,
         wrapped_data: Sequence[
-            dict[str, Any] | np.ndarray | torch.Tensor | float | int | bool
+            Sequence[dict[str, Any] | np.ndarray | torch.Tensor | float | int | bool]
+            | dict[str, Any]
+            | np.ndarray
+            | torch.Tensor
+            | float
+            | int
+            | bool
         ],
         bulk: bool,
     ) -> Sequence[np.ndarray | torch.Tensor | float | int | bool]:
         """Unwraps dictionary data into a sequence of items that FlatReplayBuffer can use.
+
+        If bulk adding items, this expects dictionary items to be a list of dictionaries, NOT a dictionary of lists.
 
         Args:
         ----
@@ -210,6 +267,36 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
             Sequence[np.ndarray | torch.Tensor | float | int | bool]:
 
         """
+        # if bulk is True, then everything is a list/np.ndarray
+        # items where it's a dict is expected to be a list of dictionaries
+        # so we need to convert them into dictionary of lists
+        if bulk:
+            # perform some checks
+            if any([isinstance(item, dict) for item in wrapped_data]):
+                raise ReplayBufferException(
+                    "Expected bulk data to have list of dict for dict-ed items, not a dictionary of stacked items."
+                )
+            if any([isinstance(item, (float, int, bool)) for item in wrapped_data]):
+                raise ReplayBufferException(
+                    "Bulked addition must all be sequences of items, cannot be raw `float`, `int` or `bool`."
+                )
+            if not all([len(item) == len(item[0]) for item in wrapped_data]):  # pyright: ignore[reportArgumentType, reportIndexIssue]
+                raise ReplayBufferException(
+                    "Expected each item in bulked data to be equal length sequence, "
+                    f"instead got {[len(item) for item in wrapped_data]}."  # pyright: ignore[reportArgumentType]
+                )
+
+            # invert the wrap for bulking
+            # ie: convert list[dict] items into dict[list]
+            inverted_wrapped_data = []
+            for item in wrapped_data:
+                inverted_wrapped_data.append(
+                    item
+                    if not isinstance(item[0], dict)  # pyright: ignore[reportArgumentType, reportIndexIssue]
+                    else self._recursive_invert_listed_dict(item)  # pyright: ignore[reportArgumentType]
+                )
+                wrapped_data = inverted_wrapped_data
+
         if len(self) == 0:
             self.mapping, self.total_elements = self._generate_mapping(
                 wrapped_data=wrapped_data
@@ -224,10 +311,8 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
         # holder for the unwrapped data
         unwrapped_data: list[Any] = [None] * self.total_elements
 
-        # TODO: recursively pack dictionary data when using bulk
-
         for i, (mapping, data_item) in enumerate(zip(self.mapping, wrapped_data)):
-            # if the mapping says it's an int, then just set the data without nestint
+            # if the mapping says it's an int, then just set the data without nesting
             if isinstance(mapping, int):
                 unwrapped_data[mapping] = data_item
 
@@ -239,7 +324,7 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
                         f"Expected `wrapped_data` at element {i} to be a dict, but got {type(data_item)}."
                     )
 
-                unwrapped_data = self._unpack_dict_data(
+                unwrapped_data = self._recursive_unpack_dict_data(
                     data_dict=data_item,
                     unwrapped_data_target=unwrapped_data,
                     mapping=mapping,
@@ -248,7 +333,7 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
         return unwrapped_data
 
     @staticmethod
-    def _pack_dict_data(
+    def _recursive_pack_dict_data(
         unwrapped_data: Sequence[Any],
         mapping: _NestedDict,
     ) -> dict[str, Any]:
@@ -269,7 +354,7 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
             if isinstance(idx_map, int):
                 data_dict[key] = unwrapped_data[idx_map]
             elif isinstance(idx_map, dict):
-                data_dict[key] = DictReplayBufferWrapper._pack_dict_data(
+                data_dict[key] = DictReplayBufferWrapper._recursive_pack_dict_data(
                     unwrapped_data=unwrapped_data,
                     mapping=idx_map,
                 )
@@ -306,7 +391,7 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
             if isinstance(idx_map, int):
                 wrapped_data[i] = unwrapped_data[idx_map]
             elif isinstance(idx_map, dict):
-                wrapped_data[i] = DictReplayBufferWrapper._pack_dict_data(
+                wrapped_data[i] = DictReplayBufferWrapper._recursive_pack_dict_data(
                     unwrapped_data=unwrapped_data,
                     mapping=idx_map,
                 )

@@ -205,7 +205,10 @@ class ReplayBufferWrapper(ReplayBuffer):
             None:
 
         """
-        self.base_buffer.push(data=self.unwrap_data(data), bulk=bulk)
+        self.base_buffer.push(
+            data=self.unwrap_data(data, bulk),
+            bulk=bulk,
+        )
 
     def sample(self, batch_size: int) -> Sequence[Any]:
         """sample.
