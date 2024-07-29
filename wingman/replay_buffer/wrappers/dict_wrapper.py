@@ -26,7 +26,7 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
     def __init__(self, replay_buffer: FlatReplayBuffer) -> None:
         """__init__.
 
-        If bulk adding items, this expects dictionary items to be a list of dictionaries, NOT a dictionary of lists.
+        If bulk adding items, this expects dictionary items to be a dictionary of lists, NOT a list of dictionaries.
 
         Args:
         ----
@@ -47,47 +47,6 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
         #   - if the value is a dict, means that this data holds a nested dict
         self.mapping: list[int | _NestedDict] = []
         self.total_elements = 0
-
-    @staticmethod
-    def _recursive_invert_listed_dict(
-        listed_dicts: Sequence[
-            dict[str, np.ndarray | torch.Tensor]
-            | np.ndarray
-            | torch.Tensor
-            | float
-            | int
-            | bool
-        ],
-    ) -> (
-        dict[
-            str,
-            Sequence[np.ndarray | torch.Tensor | float | int | bool],
-        ]
-        | Sequence[
-            dict[str, np.ndarray | torch.Tensor]
-            | np.ndarray
-            | torch.Tensor
-            | float
-            | int
-            | bool
-        ]
-    ):
-        # if the item in the list is not a dictionary,
-        # we can just stack the output and return it
-        if not isinstance(listed_dicts[0], dict):
-            return [item for item in listed_dicts]
-
-        # at this point, the items in the list are dicts
-        # so we need to recursively invert it
-        # if the first item is a dict, we expect that every other item in the listed_dicts is a dict
-        # with the same keys
-        dicted_lists = dict()
-        for key in listed_dicts[0].keys():
-            dicted_lists[key] = DictReplayBufferWrapper._recursive_invert_listed_dict(
-                [ld[key] for ld in listed_dicts]  # pyright: ignore[reportIndexIssue]
-            )
-
-        return dicted_lists
 
     @staticmethod
     def _recursive_unpack_dict_mapping(
@@ -255,7 +214,7 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
     ) -> Sequence[np.ndarray | torch.Tensor | float | int | bool]:
         """Unwraps dictionary data into a sequence of items that FlatReplayBuffer can use.
 
-        If bulk adding items, this expects dictionary items to be a list of dictionaries, NOT a dictionary of lists.
+        If bulk adding items, this expects dictionary items to be a dictionary of lists, NOT a list of dictionaries.
 
         Args:
         ----
@@ -267,36 +226,6 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
             Sequence[np.ndarray | torch.Tensor | float | int | bool]:
 
         """
-        # if bulk is True, then everything is a list/np.ndarray
-        # items where it's a dict is expected to be a list of dictionaries
-        # so we need to convert them into dictionary of lists
-        if bulk:
-            # perform some checks
-            if any([isinstance(item, dict) for item in wrapped_data]):
-                raise ReplayBufferException(
-                    "Expected bulk data to have list of dict for dict-ed items, not a dictionary of stacked items."
-                )
-            if any([isinstance(item, (float, int, bool)) for item in wrapped_data]):
-                raise ReplayBufferException(
-                    "Bulked addition must all be sequences of items, cannot be raw `float`, `int` or `bool`."
-                )
-            if not all([len(item) == len(item[0]) for item in wrapped_data]):  # pyright: ignore[reportArgumentType, reportIndexIssue]
-                raise ReplayBufferException(
-                    "Expected each item in bulked data to be equal length sequence, "
-                    f"instead got {[len(item) for item in wrapped_data]}."  # pyright: ignore[reportArgumentType]
-                )
-
-            # invert the wrap for bulking
-            # ie: convert list[dict] items into dict[list]
-            inverted_wrapped_data = []
-            for item in wrapped_data:
-                inverted_wrapped_data.append(
-                    item
-                    if not isinstance(item[0], dict)  # pyright: ignore[reportArgumentType, reportIndexIssue]
-                    else self._recursive_invert_listed_dict(item)  # pyright: ignore[reportArgumentType]
-                )
-                wrapped_data = inverted_wrapped_data
-
         if len(self) == 0:
             self.mapping, self.total_elements = self._generate_mapping(
                 wrapped_data=wrapped_data
