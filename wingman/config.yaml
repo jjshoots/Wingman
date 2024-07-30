@@ -1,20 +1,26 @@
 # wingman required params
 # https://github.com/jjshoots/Wingman?tab=readme-ov-file#from-wingman-import-wingman
-debug: false
+wingman:
+  debug: false
 
-save_directory: 'weights'
-model_id: null
-ckpt_number: 0
-log_status: false
+model:
+  save_directory: "weights"
+  id: ""
+  ckpt: 0
+  increment_ckpt: true
 
-increment: true
-logging_interval: 10
-max_skips: 5
-greater_than: 0.0
+logging:
+  interval: 10
+  max_skips: 5
+  greater_than: 0.0
+  filename: ""
 
-wandb: false
-wandb_name: ''
-wandb_notes: ''
-wandb_id: ''
-wandb_entity: 'wingman'
-wandb_project: 'my_new_project'
+wandb:
+  enabled: false
+  save_code: false
+  run:
+    name: ""
+    notes: ""
+  project:
+    name: "my_new_project"
+    entity: "wingman"
