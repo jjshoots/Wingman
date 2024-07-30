@@ -1,8 +1,5 @@
 # wingman required params
 # https://github.com/jjshoots/Wingman?tab=readme-ov-file#from-wingman-import-wingman
-wingman:
-  debug: false
-
 model:
   save_directory: "weights"
   id: ""
