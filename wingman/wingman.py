@@ -2,20 +2,17 @@
 
 from __future__ import annotations
 
-import argparse
 import math
 import os
 import shutil
 import time
-import types
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Tuple
 
 import numpy as np
 import wandb
-import yaml
 
+from wingman.config_utils import generate_wingman_config
 from wingman.exceptions import WingmanException
 from wingman.print_utils import cstr, wm_print
 
@@ -65,8 +62,7 @@ class Wingman:
 
         """
         # save our experiment description
-        self.config_yaml: Path = Path(config_yaml)
-        self.cfg = self._yaml_to_args()
+        self.cfg = generate_wingman_config(config_yaml)
 
         # make sure that logging_interval is positive
         if self.cfg.logging.interval <= 0:
@@ -124,7 +120,7 @@ class Wingman:
             time.sleep(3)
             self._model_directory.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(
-                self.config_yaml,
+                config_yaml,
                 self._model_directory / "config_copy.yaml",
             )
 
@@ -147,161 +143,9 @@ class Wingman:
 
         return device
 
-    @staticmethod
-    def _config_cli_overrides(
-        config_dict: dict[str, Any],
-    ) -> dict[str, Any]:
-        """When provided a `config_dict`, allows the overriding of values via the cli.
-
-        For example, if we have the following dict:
-        ```
-        data = {
-            "a": {
-                "b": 3
-            }
-        }
-        ```
-
-        This function allows us to override the value at "b" via
-        ```
-        python3 <program.py> --a.b=5
-        ```
-
-        Args:
-        ----
-            config_dict (dict[str, Any]): a nested dictionary of values.
-
-        Returns:
-        -------
-            dict[str, Any]: an altered nested dictionary.
-
-        """
-
-        def nested_argparse(
-            parser: argparse.ArgumentParser,
-            nested_dict: dict[str, Any],
-            basename: str = "",
-        ) -> argparse.ArgumentParser:
-            """Builds an argparser by recursively nesting arguments.
-
-            Args:
-            ----
-                parser (argparse.ArgumentParser): parser
-                nested_dict (dict[str, Any]): nested_dict
-                basename (str): basename
-
-            Returns:
-            -------
-                argparse.ArgumentParser: the resulting argparser with nested arguments.
-
-            """
-            for k, v in nested_dict.items():
-                # extend the basename
-                name = f"{basename}.{k}" if basename else k
-
-                # if dict, we need to recurse
-                if isinstance(v, dict):
-                    parser = nested_argparse(
-                        parser=parser,
-                        nested_dict=v,
-                        basename=name,
-                    )
-
-                # otherwise, just add to parser like usual
-                else:
-                    parser.add_argument(
-                        f"--{name}",
-                        type=type(v),
-                        nargs="?",
-                        const=True,
-                        default=v,
-                        help="None",
-                    )
-
-            return parser
-
-        # recursively convert arguments to cli args
-        raw_overrides = vars(
-            nested_argparse(
-                parser=argparse.ArgumentParser(allow_abbrev=False),
-                nested_dict=config_dict,
-            ).parse_args()
-        )
-
-        # pull out each item in the raw overrides and
-        # replace the variable within the main config
-        for joint_k, v in raw_overrides.items():
-            k_list = joint_k.split(sep=".")
-            current = config_dict
-            for key in k_list[:-1]:
-                current = current[key]
-            current[k_list[-1]] = v
-
-        return config_dict
-
-    def _yaml_to_args(self) -> types.SimpleNamespace | argparse.Namespace:
-        """Reads the yaml file provided at init and converts it to commandline arguments."""
-
-        def ns_to_dict(nested_namespace: types.SimpleNamespace) -> dict[str, Any]:
-            """ns_to_dict."""
-            return {
-                k: (ns_to_dict(v) if isinstance(v, types.SimpleNamespace) else v)
-                for k, v in vars(nested_namespace).items()
-            }
-
-        def dict_to_ns(nested_dict: dict[str, Any]) -> types.SimpleNamespace:
-            """dict_to_ns."""
-            return types.SimpleNamespace(
-                **{
-                    k: (dict_to_ns(v) if isinstance(v, dict) else v)
-                    for k, v in nested_dict.items()
-                }
-            )
-
-        # read in the file
-        with open(self.config_yaml) as f:
-            config_dict = yaml.load(f, Loader=yaml.FullLoader)
-
-        # allow cli to override dict values
-        config_dict = self._config_cli_overrides(config_dict)
-
-        # override model_id if needed
-        if not config_dict["model"]["id"]:
-            config_dict["model"]["id"] = str(np.random.randint(999999))
-
-        # save the device to the config
-        config_dict["wingman"]["device"] = str(self.device)
-
-        # cfg depending on whether wandb is enabled
-        if not config_dict["wandb"]["enabled"]:
-            return dict_to_ns(config_dict)
-        else:
-            # generate the wandb run display name
-            if config_dict["wandb"]["run"]["name"] != "":
-                run_name = f'{config_dict["wandb"]["run"]["name"]}, v={config_dict["model"]["id"]}'
-            else:
-                run_name = config_dict["wandb"]["model"]["id"]
-
-            # initialize wandb
-            wandb.init(
-                project=config_dict["wandb"]["project"]["name"],
-                entity=config_dict["wandb"]["project"]["entity"],
-                config=config_dict,
-                name=run_name,
-                notes=config_dict["wandb"]["run"]["notes"],
-            )
-
-            # optionally save code
-            if config_dict["wandb"]["save_code"]:
-                raise NotImplementedError("Save code is not enabled yet.")
-                wandb.run.log_code(".", exclude_fn=lambda path: "venv" in path)
-
-            # set to be consistent with wandb config
-            return wandb.config
-
     def checkpoint(
         self, loss: float, step: int | None = None
-    ) -> Tuple[bool, Path, Path]:
+    ) -> tuple[bool, Path, Path]:
         """checkpoint.
 
         Records training every logging_interval steps.
@@ -318,7 +162,7 @@ class Wingman:
 
         Returns:
         -------
-            Tuple[bool, Path, Path]: to_update, weights_file, optim_file
+            tuple[bool, Path, Path]: to_update, weights_file, optim_file
 
         """
         # if step is None, we automatically increment
@@ -460,7 +304,7 @@ class Wingman:
         with open(filename, "ab") as f:
             np.savetxt(f, [data], delimiter=",", fmt=precision)
 
-    def get_weight_files(self, latest: bool = True) -> Tuple[bool, Path, Path]:
+    def get_weight_files(self, latest: bool = True) -> tuple[bool, Path, Path]:
         """get_weight_files.
 
         Returns three things:
@@ -474,7 +318,7 @@ class Wingman:
 
         Returns:
         -------
-            Tuple[bool, Path, Path]: have_file, weights_file, optim_file
+            tuple[bool, Path, Path]: have_file, weights_file, optim_file
 
         """
         # if we don't need the latest file, get the one specified
