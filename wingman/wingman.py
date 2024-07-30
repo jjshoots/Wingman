@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 import wandb
 
-from wingman.config_utils import generate_wingman_config
+from wingman.config_utils import LockedNamespace, generate_wingman_config
 from wingman.exceptions import WingmanException
 from wingman.print_utils import cstr, wm_print
 
@@ -62,7 +62,7 @@ class Wingman:
 
         """
         # save our experiment description
-        self.cfg = generate_wingman_config(config_yaml)
+        self.cfg: LockedNamespace = generate_wingman_config(config_yaml)
 
         # make sure that logging_interval is positive
         if self.cfg.logging.interval <= 0:

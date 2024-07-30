@@ -14,22 +14,17 @@ import yaml
 from wingman.exceptions import WingmanException
 
 
-def ns_to_dict(nested_namespace: types.SimpleNamespace) -> dict[str, Any]:
-    """ns_to_dict.
-
-    Args:
-        nested_namespace (types.SimpleNamespace): nested_namespace
-
-    Returns:
-        dict[str, Any]:
-    """
-    return {
-        k: (ns_to_dict(v) if isinstance(v, types.SimpleNamespace) else v)
-        for k, v in vars(nested_namespace).items()
-    }
+class LockedNamespace(types.SimpleNamespace):
+    def __setattr__(self, name, value):
+        if hasattr(self, name):
+            raise WingmanException(
+                "Can't override values for locked_namespace. "
+                f"Tried to set `{name}` which already has value {value}."
+            )
+        super().__setattr__(name, value)
 
 
-def dict_to_ns(nested_dict: dict[str, Any]) -> types.SimpleNamespace:
+def dict_to_locked_ns(nested_dict: dict[str, Any]) -> LockedNamespace:
     """dict_to_ns.
 
     Args:
@@ -38,9 +33,9 @@ def dict_to_ns(nested_dict: dict[str, Any]) -> types.SimpleNamespace:
     Returns:
         types.SimpleNamespace:
     """
-    return types.SimpleNamespace(
+    return LockedNamespace(
         **{
-            k: (dict_to_ns(v) if isinstance(v, dict) else v)
+            k: (dict_to_locked_ns(v) if isinstance(v, dict) else v)
             for k, v in nested_dict.items()
         }
     )
@@ -153,7 +148,7 @@ def dict_cli_overrides(config_dict: dict[str, Any]) -> dict[str, Any]:
 
     return config_dict
 
-def generate_wingman_config(config_yaml: Path | str) -> types.SimpleNamespace | argparse.Namespace:
+def generate_wingman_config(config_yaml: Path | str) -> LockedNamespace:
     """Reads the yaml file provided at init and converts it to commandline arguments."""
     # read in the file
     with open(config_yaml) as f:
@@ -177,10 +172,8 @@ def generate_wingman_config(config_yaml: Path | str) -> types.SimpleNamespace | 
     if not config_dict["model"]["id"]:
         config_dict["model"]["id"] = str(np.random.randint(999999))
 
-    # cfg depending on whether wandb is enabled
-    if not config_dict["wandb"]["enable"]:
-        return dict_to_ns(config_dict)
-    else:
+    # conditionally wandb
+    if config_dict["wandb"]["enable"]:
         # generate the wandb run display name
         if config_dict["wandb"]["run"]["name"] != "":
             run_name = f'{config_dict["wandb"]["run"]["name"]}, v={config_dict["model"]["id"]}'
@@ -201,5 +194,4 @@ def generate_wingman_config(config_yaml: Path | str) -> types.SimpleNamespace | 
             raise NotImplementedError("Save code is not yet implemented.")
             wandb.run.log_code(".", exclude_fn=lambda path: "venv" in path)
 
-        # set to be consistent with wandb config
-        return wandb.config
+    return dict_to_locked_ns(config_dict)
