@@ -15,7 +15,10 @@ from wingman.exceptions import WingmanException
 
 
 class LockedNamespace(types.SimpleNamespace):
+    """A locked namespace, where new attributes can be set but old ones cannot be overwritten."""
+
     def __setattr__(self, name, value):
+        """__setattr__."""
         if hasattr(self, name):
             raise WingmanException(
                 "Can't override values for locked_namespace. "
@@ -28,10 +31,13 @@ def dict_to_locked_ns(nested_dict: dict[str, Any]) -> LockedNamespace:
     """dict_to_ns.
 
     Args:
+    ----
         nested_dict (dict[str, Any]): nested_dict
 
     Returns:
+    -------
         types.SimpleNamespace:
+
     """
     return LockedNamespace(
         **{
@@ -45,11 +51,14 @@ def check_dict_superset(base: dict[str, Any], target: dict[str, Any]) -> bool:
     """Checks that the `base` is a superset of the `target`.
 
     Args:
+    ----
         base (dict[str, Any]): base
         target (dict[str, Any]): target
 
     Returns:
+    -------
         bool:
+
     """
     for k, v in target.items():
         if k not in base:
@@ -148,6 +157,7 @@ def dict_cli_overrides(config_dict: dict[str, Any]) -> dict[str, Any]:
 
     return config_dict
 
+
 def generate_wingman_config(config_yaml: Path | str) -> LockedNamespace:
     """Reads the yaml file provided at init and converts it to commandline arguments."""
     # read in the file
@@ -176,7 +186,9 @@ def generate_wingman_config(config_yaml: Path | str) -> LockedNamespace:
     if config_dict["wandb"]["enable"]:
         # generate the wandb run display name
         if config_dict["wandb"]["run"]["name"] != "":
-            run_name = f'{config_dict["wandb"]["run"]["name"]}, v={config_dict["model"]["id"]}'
+            run_name = (
+                f'{config_dict["wandb"]["run"]["name"]}, v={config_dict["model"]["id"]}'
+            )
         else:
             run_name = config_dict["wandb"]["model"]["id"]
 
