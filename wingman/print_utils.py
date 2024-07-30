@@ -45,7 +45,7 @@ log_flag = cstr(cstr("wingman", "BOLD"), "OKCYAN")
 ansi_escape = re.compile(r"(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]")
 
 
-def wm_print(x: Any, log_file: Path | str | bool = False):
+def wm_print(x: Any, log_file: Path | str = ""):
     """Prints out strings decorated with the wingman status.
 
     Args:

@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
-import argparse
 import math
 import os
 import shutil
 import time
+from functools import cached_property
 from pathlib import Path
-from typing import Tuple
 
 import numpy as np
 import wandb
-import yaml
 
+from wingman.config_utils import LockedNamespace, generate_wingman_config
 from wingman.exceptions import WingmanException
 from wingman.print_utils import cstr, wm_print
 
@@ -54,26 +53,22 @@ class Wingman:
     def __init__(
         self,
         config_yaml: str | Path,
-        experiment_description: str = "",
     ):
         """__init__.
 
         Args:
         ----
             config_yaml (str): location of where the config yaml is described
-            experiment_description (str): optional description of the experiment
 
         """
         # save our experiment description
-        self.config_yaml: Path = Path(config_yaml)
-        self.experiment_description = experiment_description
-        self.cfg = self.__yaml_to_args()
+        self.cfg: LockedNamespace = generate_wingman_config(config_yaml)
 
         # make sure that logging_interval is positive
-        if self.cfg.logging_interval <= 0:
+        if self.cfg.logging.interval <= 0:
             raise WingmanException(
                 cstr(
-                    f"logging_interval must be a positive number, got {self.cfg.logging_interval}.",
+                    f"logging_interval must be a positive number, got {self.cfg.logging.interval}.",
                     "FAIL",
                 )
             )
@@ -82,37 +77,40 @@ class Wingman:
         self.log = dict()
 
         # runtime variables
-        self.num_losses = 0
-        self.cumulative_loss = 0
-        self.lowest_loss = math.inf
-        self.next_log_step = self.cfg.logging_interval
-        self.previous_checkpoint_step = 0
-        self.skips = 0
+        self._num_losses: int = 0
+        self._cumulative_loss: float = 0.0
+        self._lowest_cumulative_lost: float = math.inf
+        self._next_log_step: int = self.cfg.logging.interval
+        self._previous_ckpt_step: int = 0
+        self._skips: int = 0
 
         # weight file variables
-        self.model_id = self.cfg.model_id
-        self.ckpt_number = self.cfg.ckpt_number
-        self.previous_checkpoint_number = -1
+        self._current_ckpt: int = self.cfg.model.ckpt
+        self._previous_ckpt: int = -1
 
         # directory itself
-        self.model_directory = Path(self.cfg.save_directory) / str(self.model_id)
+        self._model_directory: Path = Path(self.cfg.model.save_directory) / str(
+            self.cfg.model.id
+        )
 
         # file paths
-        self.model_file = self.model_directory / f"weights{self.ckpt_number}.path"
-        self.optim_file = self.model_directory / "optimizer_path"
-        self.status_file = self.model_directory / "lowest_loss.npy"
-        self.intermediary_file = self.model_directory / "weights-1.npy"
-        if self.log_file:
-            self.log_file = self.model_directory / "log.txt"
+        self._model_file: Path = (
+            self._model_directory / f"weights{self._current_ckpt}.path"
+        )
+        self._optim_file: Path = self._model_directory / "optimizer_path"
+        self._lowest_loss_file: Path = self._model_directory / "lowest_loss.npy"
+        self._intermediary_file: Path = self._model_directory / "weights-1.npy"
+        self._log_file: Path = self._model_directory / "log.txt"
 
         wm_print("--------------𓆩𓆪--------------")
         wm_print(f"Using device {cstr(self.device, 'HEADER')}")
-        wm_print(f"Saving weights to {cstr(self.model_directory, 'HEADER')}...")
+        wm_print(f"Saving weights to {cstr(self._model_directory, 'HEADER')}...")
 
         # check to record that we're in a new training session and save the config file
-        self.fresh_directory = False
-        if not self.model_directory.is_dir():
-            self.fresh_directory = True
+        if self._model_directory.is_dir():
+            self._fresh_directory = False
+        else:
+            self._fresh_directory = True
             wm_print(
                 cstr(
                     "New training instance detected, generating weights directory in 3 seconds...",
@@ -120,120 +118,34 @@ class Wingman:
                 ),
             )
             time.sleep(3)
-            self.model_directory.mkdir(parents=True, exist_ok=True)
+            self._model_directory.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(
-                self.config_yaml,
-                self.model_directory / "config_copy.yaml",
+                config_yaml,
+                self._model_directory / "config_copy.yaml",
             )
 
-    def __get_device(self):
+    @cached_property
+    def device(self):
         """__get_device."""
-        from warnings import warn
-
         try:
             import torch
 
             if torch.cuda.is_available():
-                self.device = torch.device("cuda:0")
+                device = torch.device("cuda:0")
             elif torch.backends.mps.is_available():
-                self.device = torch.device("mps")
+                device = torch.device("mps")
             else:
-                self.device = torch.device("cpu")
+                device = torch.device("cpu")
         except ImportError:
-            warn(
+            raise WingmanException(
                 "Could not import torch, this is not bundled as part of Wingman and has to be installed manually."
             )
 
-        return self.device
-
-    def __yaml_to_args(self):
-        """Reads the yaml file provided at init and converts it to commandline arguments."""
-        # parse the arguments
-        parser = argparse.ArgumentParser(description=self.experiment_description)
-
-        with open(self.config_yaml) as f:
-            # read in the file
-            config = yaml.load(f, Loader=yaml.FullLoader)
-
-            # checks that we have the default params in the file
-            assertion_list = [
-                "debug",
-                "save_directory",
-                "model_id",
-                "ckpt_number",
-                "log_status",
-                "increment",
-                "logging_interval",
-                "max_skips",
-                "greater_than",
-                "wandb",
-                "wandb_name",
-                "wandb_notes",
-                "wandb_id",
-                "wandb_entity",
-                "wandb_project",
-            ]
-            missing_set = set(assertion_list) - set(config.keys())
-            if missing_set:
-                raise WingmanException(
-                    cstr(f"Missing parameters {missing_set} in config file.", "FAIL")
-                )
-
-            # override model_id if needed
-            if config["model_id"] is None:
-                config["model_id"] = np.random.randint(999999)
-
-            # make a logging file if required
-            self.log_file = config["log_status"]
-
-            # add all to argparse
-            for item in config:
-                parser.add_argument(
-                    f"--{item}",
-                    type=type(config[item]),
-                    nargs="?",
-                    const=True,
-                    default=config[item],
-                    help="None",
-                )
-
-        # dict of all arguments, by default will be overridden by commandline args
-        config = {**vars(parser.parse_args())}
-
-        # add the gpu
-        config["device"] = self.__get_device()
-
-        # change the model_id if debugging
-        config["model_id"] = "Debug" if config["debug"] else str(config["model_id"])
-
-        # cfg depending on whether wandb is enabled
-        cfg = None
-        if config["wandb"]:
-            wandb.init(
-                project=config["wandb_project"],
-                entity=config["wandb_entity"],
-                config=config,
-                name=config["wandb_name"] + ", v=" + config["model_id"]
-                if config["wandb_name"] != ""
-                else config["model_id"],
-                notes=config["wandb_notes"],
-                id=config["wandb_id"] if config["wandb_id"] != "" else None,
-            )
-
-            # also save the code if wandb
-            # wandb.run.log_code(".", exclude_fn=lambda path: "venv" in path)  # type: ignore
-
-            # set to be consistent with wandb config
-            cfg = wandb.config
-        else:
-            # otherwise just merge settings with args
-            cfg = argparse.Namespace(**config)
-
-        return cfg
+        return device
 
     def checkpoint(
         self, loss: float, step: int | None = None
-    ) -> Tuple[bool, Path, Path]:
+    ) -> tuple[bool, Path, Path]:
         """checkpoint.
 
         Records training every logging_interval steps.
@@ -250,82 +162,82 @@ class Wingman:
 
         Returns:
         -------
-            Tuple[bool, Path, Path]: to_update, weights_file, optim_file
+            tuple[bool, Path, Path]: to_update, weights_file, optim_file
 
         """
         # if step is None, we automatically increment
         if step is None:
-            step = self.previous_checkpoint_step + 1
+            step = self._previous_ckpt_step + 1
 
         # check that our step didn't go in reverse
-        if step < self.previous_checkpoint_step:
+        if step < self._previous_ckpt_step:
             raise WingmanException(
                 cstr(
-                    f"We can't step backwards! Got step {step} but the previous logging step was {self.previous_checkpoint_step}.",
+                    f"We can't step backwards! Got step {step} but the previous logging step was {self._previous_ckpt_step}.",
                     "FAIL",
                 )
             )
-        self.previous_checkpoint_step = step
+        self._previous_ckpt_step = step
 
         """ACCUMULATE LOSS"""
-        self.cumulative_loss += loss
-        self.num_losses += 1.0
+        self._cumulative_loss += loss
+        self._num_losses += 1
 
         # if we haven't passed the required number of steps
-        if step < self.next_log_step:
-            return False, self.model_file, self.optim_file
+        if step < self._next_log_step:
+            return False, self._model_file, self._optim_file
 
         # log to wandb if needed, but only on the logging steps
-        if self.cfg.wandb:
+        if self.cfg.wandb.enable:
             self.wandb_log()
 
         """GET NEW AVG LOSS"""
         # record the losses and reset the cumulative
-        avg_loss = self.cumulative_loss / self.num_losses
-        self.cumulative_loss = 0.0
-        self.num_losses = 0.0
+        avg_loss = self._cumulative_loss / self._num_losses
+        self._cumulative_loss = 0.0
+        self._num_losses = 0
 
         # compute the next time we need to log
-        self.next_log_step = (
-            int(step / self.cfg.logging_interval) + 1
-        ) * self.cfg.logging_interval
+        self._next_log_step = (
+            int(step / self.cfg.logging.interval) + 1
+        ) * self.cfg.logging.interval
 
         # always print on n intervals
         wm_print(
-            f"Step {cstr(step, 'OKCYAN')}; Average Loss {cstr(f'{avg_loss:.5f}', 'OKCYAN')}; Lowest Average Loss {cstr(f'{self.lowest_loss:.5f}', 'OKCYAN')}",
-            self.log_file,
+            f"Step {cstr(step, 'OKCYAN')}; Average Loss {cstr(f'{avg_loss:.5f}', 'OKCYAN')}; Lowest Average Loss {cstr(f'{self._lowest_cumulative_lost:.5f}', 'OKCYAN')}",
+            self.cfg.logging.filename,
         )
 
         """CHECK IF NEW LOSS IS BETTER"""
         # if we don't meet the criteria for saving
-        if avg_loss >= self.lowest_loss - self.cfg.greater_than:
+        if avg_loss >= self._lowest_cumulative_lost - self.cfg.logging.greater_than:
             # accumulate skips
-            if self.skips < self.cfg.max_skips:
-                self.skips += 1
-                return False, self.model_file, self.optim_file
+            if self._skips < self.cfg.logging.max_skips:
+                self._skips += 1
+                return False, self._model_file, self._optim_file
             else:
                 # save the network to intermediary if we crossed the max number of skips
                 wm_print(
-                    f"Passed {self.cfg.max_skips} intervals without saving so far, saving weights to: {cstr(self.intermediary_file, 'OKCYAN')}",
-                    self.log_file,
+                    f"Passed {self.cfg.logging.max_skips} intervals without saving so far, saving weights to: {cstr(self._intermediary_file, 'OKCYAN')}",
+                    self.cfg.logging.filename,
                 )
-                self.skips = 0
-                return True, self.intermediary_file, self.optim_file
+                self._skips = 0
+                return True, self._intermediary_file, self._optim_file
 
         """NEW LOSS IS BETTER"""
         # redefine the new lowest loss and reset the skips
-        self.lowest_loss = avg_loss
-        self.skips = 0
+        self._lowest_cumulative_lost = avg_loss
+        self._skips = 0
 
         # increment means return the files with incremented checkpoint number
-        if self.cfg.increment:
+        if self.cfg.model.increment_ckpt:
             # check if we are safe to increment checkpoint numbers and regenerate weights file
-            if self.previous_checkpoint_number == -1 or self.model_file.exists():
-                self.previous_checkpoint_number = self.ckpt_number
-                self.model_file = (
-                    self.model_directory / f"weights{self.ckpt_number}.pth"
+            if self._previous_ckpt == -1 or self._model_file.exists():
+                self._previous_ckpt = self._current_ckpt
+                self._model_file = (
+                    self._model_directory / f"weights{self._current_ckpt}.pth"
                 )
-                self.ckpt_number += 1
+                self._current_ckpt += 1
 
             else:
                 wm_print(
@@ -333,19 +245,19 @@ class Wingman:
                         "Didn't save weights file for the previous checkpoint number (self.ckpt_number), not incrementing checkpoint number.",
                         "WARNING",
                     ),
-                    self.log_file,
+                    self.cfg.logging.filename,
                 )
-                self.ckpt_number = self.previous_checkpoint_number
+                self._current_ckpt = self._previous_ckpt
 
         # record the lowest running loss in the status file
-        np.save(self.status_file, self.lowest_loss)
+        np.save(self._lowest_loss_file, self._lowest_cumulative_lost)
 
         wm_print(
-            f"New lowest point, saving weights to: {cstr(self.model_file, 'OKGREEN')}",
-            self.log_file,
+            f"New lowest point, saving weights to: {cstr(self._model_file, 'OKGREEN')}",
+            self.cfg.logging.filename,
         )
 
-        return True, self.model_file, self.optim_file
+        return True, self._model_file, self._optim_file
 
     def wandb_log(self) -> None:
         """wandb_log.
@@ -365,7 +277,7 @@ class Wingman:
             raise WingmanException(
                 cstr(f"log must be dictionary, currently it is {self.log}.", "FAIL")
             )
-        if self.cfg.wandb:
+        if self.cfg.wandb.enable:
             wandb.log(self.log)
 
     def write_auxiliary(
@@ -388,11 +300,11 @@ class Wingman:
             raise WingmanException(
                 cstr("Data must be only 1 dimensional ndarray", "FAIL")
             )
-        filename = self.model_directory / f"{variable_name}.csv"
+        filename = self._model_directory / f"{variable_name}.csv"
         with open(filename, "ab") as f:
             np.savetxt(f, [data], delimiter=",", fmt=precision)
 
-    def get_weight_files(self, latest: bool = True) -> Tuple[bool, Path, Path]:
+    def get_weight_files(self, latest: bool = True) -> tuple[bool, Path, Path]:
         """get_weight_files.
 
         Returns three things:
@@ -406,69 +318,71 @@ class Wingman:
 
         Returns:
         -------
-            Tuple[bool, Path, Path]: have_file, weights_file, optim_file
+            tuple[bool, Path, Path]: have_file, weights_file, optim_file
 
         """
         # if we don't need the latest file, get the one specified
         if not latest:
-            if os.path.isfile(self.model_file):
-                self.model_file = (
-                    self.model_directory / f"weights{self.ckpt_number}.pth"
+            if os.path.isfile(self._model_file):
+                self._model_file = (
+                    self._model_directory / f"weights{self._current_ckpt}.pth"
                 )
                 wm_print(
-                    f"Using weights file: {cstr(f'{self.model_directory}/weights{self.ckpt_number}.pth', 'OKGREEN')}",
-                    self.log_file,
+                    f"Using weights file: {cstr(f'{self._model_directory}/weights{self._current_ckpt}.pth', 'OKGREEN')}",
+                    self.cfg.logging.filename,
                 )
-                return True, self.model_file, self.optim_file
+                return True, self._model_file, self._optim_file
             else:
                 raise ValueError(
                     cstr(
-                        f"Checkpoint number {self.ckpt_number} was requested, but it doesn't exist.",
+                        f"Checkpoint number {self._current_ckpt} was requested, but it doesn't exist.",
                         "FAIL",
                     )
                 )
 
         # while the file exists, try to look for a file one checkpoint later
-        self.ckpt_number = 0
-        while self.model_file.is_file():
-            self.ckpt_number += 1
-            self.model_file = self.model_directory / f"weights{self.ckpt_number}.pth"
+        self._current_ckpt = 0
+        while self._model_file.is_file():
+            self._current_ckpt += 1
+            self._model_file = (
+                self._model_directory / f"weights{self._current_ckpt}.pth"
+            )
 
         # once the checkpoint doesn't exist, decrement by one and use that file
-        self.ckpt_number = max(self.ckpt_number - 1, 0)
-        self.model_file = self.model_directory / f"weights{self.ckpt_number}.pth"
+        self._current_ckpt = max(self._current_ckpt - 1, 0)
+        self._model_file = self._model_directory / f"weights{self._current_ckpt}.pth"
 
         # if the file doesn't exist, notify and ignore
-        if not self.model_file.is_file():
-            if not self.fresh_directory:
+        if not self._model_file.is_file():
+            if not self._fresh_directory:
                 wm_print(
                     cstr(
                         "No weights file found, generating new one during training.",
                         "WARNING",
                     ),
-                    self.log_file,
+                    self.cfg.logging.filename,
                 )
-            self.fresh_directory = False
+            self._fresh_directory = False
 
-            return False, self.model_file, self.optim_file
+            return False, self._model_file, self._optim_file
         else:
             # hitch a ride to update the lowest running loss
-            self.lowest_loss = np.load(self.status_file).item()
+            self._lowest_cumulative_lost = np.load(self._lowest_loss_file).item()
 
             wm_print(
-                f"Using weights file: {cstr(f'{self.model_directory}/weights{self.ckpt_number}.pth', 'OKGREEN')}",
-                self.log_file,
+                f"Using weights file: {cstr(f'{self._model_directory}/weights{self._current_ckpt}.pth', 'OKGREEN')}",
+                self.cfg.logging.filename,
             )
             wm_print(
-                f"Lowest Running Loss for Net: {cstr(self.lowest_loss, 'OKCYAN')}",
-                self.log_file,
+                f"Lowest Running Loss for Net: {cstr(self._lowest_cumulative_lost, 'OKCYAN')}",
+                self.cfg.logging.filename,
             )
 
             # check if the optim file exists
-            if not os.path.isfile(self.optim_file):
+            if not os.path.isfile(self._optim_file):
                 wm_print(
                     cstr("Optim file not found, please be careful!", "WARNING"),
-                    self.log_file,
+                    self.cfg.logging.filename,
                 )
 
-            return True, self.model_file, self.optim_file
+            return True, self._model_file, self._optim_file
