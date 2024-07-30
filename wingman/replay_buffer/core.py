@@ -205,7 +205,10 @@ class ReplayBufferWrapper(ReplayBuffer):
             None:
 
         """
-        self.base_buffer.push(data=self.unwrap_data(data), bulk=bulk)
+        self.base_buffer.push(
+            data=self.unwrap_data(data, bulk),
+            bulk=bulk,
+        )
 
     def sample(self, batch_size: int) -> Sequence[Any]:
         """sample.
@@ -222,12 +225,15 @@ class ReplayBufferWrapper(ReplayBuffer):
         return self.wrap_data(self.base_buffer.sample(batch_size=batch_size))
 
     @abstractmethod
-    def unwrap_data(self, wrapped_data: Sequence[Any]) -> Sequence[Any]:
+    def unwrap_data(self, wrapped_data: Sequence[Any], bulk: bool) -> Sequence[Any]:
         """Unwraps data from the underlying data into an unwrapped format.
+
+        This is called when packing the data into the `base_buffer`.
 
         Args:
         ----
             wrapped_data (Sequence[Any]): wrapped_data
+            bulk (bool): bulk
 
         Returns:
         -------
@@ -239,6 +245,8 @@ class ReplayBufferWrapper(ReplayBuffer):
     @abstractmethod
     def wrap_data(self, unwrapped_data: Sequence[Any]) -> Sequence[Any]:
         """Wraps data from the underlying data into a wrapped format.
+
+        This is called when sampling data from `base_buffer`.
 
         Args:
         ----
