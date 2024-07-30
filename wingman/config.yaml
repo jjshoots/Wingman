@@ -4,7 +4,7 @@ model:
   save_directory: "weights"
   id: ""
   ckpt: 0
-  increment_ckpt: true
+  increment_ckpt: false
 
 logging:
   interval: 10
@@ -13,7 +13,7 @@ logging:
   filename: ""
 
 wandb:
-  enabled: false
+  enable: false
   save_code: false
   run:
     name: ""

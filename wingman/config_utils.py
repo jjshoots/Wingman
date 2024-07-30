@@ -178,7 +178,7 @@ def generate_wingman_config(config_yaml: Path | str) -> types.SimpleNamespace | 
         config_dict["model"]["id"] = str(np.random.randint(999999))
 
     # cfg depending on whether wandb is enabled
-    if not config_dict["wandb"]["enabled"]:
+    if not config_dict["wandb"]["enable"]:
         return dict_to_ns(config_dict)
     else:
         # generate the wandb run display name
@@ -198,7 +198,7 @@ def generate_wingman_config(config_yaml: Path | str) -> types.SimpleNamespace | 
 
         # optionally save code
         if config_dict["wandb"]["save_code"]:
-            raise NotImplementedError("Save code is not enabled yet.")
+            raise NotImplementedError("Save code is not yet implemented.")
             wandb.run.log_code(".", exclude_fn=lambda path: "venv" in path)
 
         # set to be consistent with wandb config

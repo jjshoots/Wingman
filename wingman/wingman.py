@@ -188,7 +188,7 @@ class Wingman:
             return False, self._model_file, self._optim_file
 
         # log to wandb if needed, but only on the logging steps
-        if self.cfg.wandb.enabled:
+        if self.cfg.wandb.enable:
             self.wandb_log()
 
         """GET NEW AVG LOSS"""
@@ -277,7 +277,7 @@ class Wingman:
             raise WingmanException(
                 cstr(f"log must be dictionary, currently it is {self.log}.", "FAIL")
             )
-        if self.cfg.wandb.enabled:
+        if self.cfg.wandb.enable:
             wandb.log(self.log)
 
     def write_auxiliary(
