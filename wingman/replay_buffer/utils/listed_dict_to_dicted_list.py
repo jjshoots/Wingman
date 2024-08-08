@@ -1,17 +1,24 @@
+"""Helper for converting a list of nested dictionaries to a nested dictionary of lists."""
+
 from __future__ import annotations
 
-import numpy as np
 import functools
 from typing import Any, Generator
+
+import numpy as np
+
 
 def _iter_nested_keys(base_dict: dict[str, Any]) -> Generator[list[str], None, None]:
     """Given a nested dictionary, yields a list of keys to each element.
 
     Args:
+    ----
         base_dict (dict[str, Any]): base_dict
 
     Returns:
+    -------
         Generator[list[str], None, None]:
+
     """
     for key, value in base_dict.items():
         if isinstance(value, dict):
@@ -20,15 +27,21 @@ def _iter_nested_keys(base_dict: dict[str, Any]) -> Generator[list[str], None, N
         else:
             yield [key]
 
-def listed_dict_to_dicted_list(list_dict: list[dict[str, Any]], stack: bool) -> dict[str, Any]:
-    """Given a list of dicts, returns a dict of lists.
+
+def listed_dict_to_dicted_list(
+    list_dict: list[dict[str, Any]], stack: bool
+) -> dict[str, Any]:
+    """Given a list of nested dicts, returns a nested dict of lists.
 
     Args:
+    ----
         list_dict (list[dict[str, Any]]): list_dict
         stack (bool): stack
 
     Returns:
+    -------
         dict[str, Any]:
+
     """
     result = {}
     for key_list in _iter_nested_keys(list_dict[0]):
@@ -57,4 +70,6 @@ def listed_dict_to_dicted_list(list_dict: list[dict[str, Any]], stack: bool) -> 
                     np.asarray(dicted_list),
                     axis=0,
                 )
+            else:
+                ptr[key_list[-1]] = np.asarray(dicted_list)
     return result
