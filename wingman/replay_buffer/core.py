@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from typing import Any, Generator, Sequence
+import warnings
 
 from prefetch_generator import prefetch
 
@@ -19,9 +20,34 @@ class ReplayBuffer:
             mem_size (int): mem_size
 
         """
-        self.memory = []
-        self.mem_size = int(mem_size)
-        self.count = 0
+    @property
+    @abstractmethod
+    def memory(self) -> list[Any]:
+        """The core memory of this buffer."""
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def mem_size(self) -> int:
+        """The maximum number of transitions this buffer holds."""
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def count(self) -> int:
+        """The number of transitions that's been through this buffer."""
+        raise NotImplementedError
+
+    @property
+    def is_full(self) -> bool:
+        """Whether or not the replay buffer has reached capacity.
+
+        Returns
+        -------
+            bool: whether the buffer is full
+
+        """
+        return self.count >= self.mem_size
 
     def __len__(self) -> int:
         """The number of memory items this replay buffer is holding.
@@ -45,17 +71,6 @@ class ReplayBuffer:
         A brief view of the memory: \n
         {self.memory}
         """
-
-    @property
-    def is_full(self) -> bool:
-        """Whether or not the replay buffer has reached capacity.
-
-        Returns
-        -------
-            bool: whether the buffer is full
-
-        """
-        return self.count >= self.mem_size
 
     @prefetch(max_prefetch=1)
     def iter_sample(
@@ -139,25 +154,31 @@ class ReplayBufferWrapper(ReplayBuffer):
 
         """
         self.base_buffer = base_buffer
+        self.mem_size = base_buffer.mem_size  # pyright: ignore[reportAttributeAccessIssue]
+
+    @property
+    @abstractmethod
+    def memory(self) -> list[Any]:
+        """The core memory of this buffer."""
+        warnings.warn(
+            "Accessing the core of `ReplayBufferWrapper` returns the "
+            "memory of the base buffer, not the wrapped buffer",
+            category=RuntimeWarning,
+        )
+        return self.base_buffer.memory
+
+    @property
+    @abstractmethod
+    def count(self) -> int:
+        """The number of transitions that's been through this buffer."""
+        return self.base_buffer.count
 
     def __len__(self) -> int:
-        """The number of memory items this replay buffer is holding.
-
-        Returns
-        -------
-            int:
-
-        """
+        """The number of memory items this replay buffer is holding."""
         return len(self.base_buffer)
 
     def __repr__(self) -> str:
-        """Printouts parameters of this replay buffer.
-
-        Returns
-        -------
-            str:
-
-        """
+        """Printouts parameters of this replay buffer."""
         return f"""ReplayBuffer of size {self.mem_size} with {len(self.memory)} elements. \n
         A brief view of the memory: \n
         {self.base_buffer}
@@ -176,17 +197,6 @@ class ReplayBufferWrapper(ReplayBuffer):
 
         """
         return self.wrap_data(self.base_buffer[idx])
-
-    @property
-    def is_full(self) -> bool:
-        """Whether or not the replay buffer has reached capacity.
-
-        Returns
-        -------
-            bool: whether the buffer is full
-
-        """
-        return self.base_buffer.is_full
 
     def push(
         self,
