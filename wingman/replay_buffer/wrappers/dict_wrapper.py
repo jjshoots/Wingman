@@ -202,13 +202,7 @@ class DictReplayBufferWrapper(ReplayBufferWrapper):
     def unwrap_data(
         self,
         wrapped_data: Sequence[
-            Sequence[dict[str, Any] | np.ndarray | torch.Tensor | float | int | bool]
-            | dict[str, Any]
-            | np.ndarray
-            | torch.Tensor
-            | float
-            | int
-            | bool
+            dict[str, Any] | np.ndarray | torch.Tensor | float | int | bool
         ],
         bulk: bool,
     ) -> Sequence[np.ndarray | torch.Tensor | float | int | bool]:
