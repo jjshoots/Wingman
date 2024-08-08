@@ -206,7 +206,10 @@ class ReplayBufferWrapper(ReplayBuffer):
 
         """
         self.base_buffer.push(
-            data=self.unwrap_data(data, bulk),
+            data=self.unwrap_data(
+                wrapped_data=data,
+                bulk=bulk,
+            ),
             bulk=bulk,
         )
 

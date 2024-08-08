@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 try:
@@ -17,7 +19,7 @@ __device = "cuda:0" if torch.cuda.is_available() else __device
 
 
 def gpuize(
-    input,
+    input: np.ndarray | torch.Tensor,
     device: str | torch.device = __device,
     dtype: torch.dtype = torch.float32,
 ) -> torch.Tensor:
@@ -25,29 +27,67 @@ def gpuize(
 
     Args:
     ----
-        input: the array that we want to gpuize
-        device: a string of the device we want to move the thing to
-        dtype: the datatype that the returned tensor should be
+        input (np.ndarray | torch.Tensor): the array that we want to gpuize
+        device (str | torch.device): a string of the device we want to move the thing to
+        dtype (torch.dtype): the datatype that the returned tensor should be
 
     """
     if torch.is_tensor(input):
-        return input.to(device=device, dtype=dtype)
+        return input.to(device=device, dtype=dtype)  # pyright: ignore[reportAttributeAccessIssue]
     else:
         return torch.tensor(input, device=device, dtype=dtype)
 
 
-def cpuize(input) -> np.ndarray:
+def nested_gpuize(
+    input: dict[str, Any],
+    device: str | torch.device = __device,
+    dtype: torch.dtype = torch.float32,
+) -> dict[str, Any]:
+    """Gpuize but for nested dictionaries of elements.
+
+    Args:
+    ----
+        input (dict[str, Any]): the array that we want to gpuize
+        device (str | torch.device): a string of the device we want to move the thing to
+        dtype (torch.dtype): the datatype that the returned tensor should be
+
+    """
+    for key, value in input.items():
+        if isinstance(value, dict):
+            input[key] = nested_gpuize(value, device=device, dtype=dtype)
+        else:
+            input[key] = gpuize(value)
+    return input
+
+
+def cpuize(input: np.ndarray | torch.Tensor) -> np.ndarray:
     """cpuize.
 
     Args:
     ----
-        input: the array of the thing we want to put on the cpu
+        input (np.ndarray | torch.Tensor): the array of the thing we want to put on the cpu
 
     """
     if torch.is_tensor(input):
-        return input.detach().cpu().numpy()
+        return input.detach().cpu().numpy()  # pyright: ignore[reportAttributeAccessIssue]
     else:
-        return input
+        return input  # pyright: ignore[reportReturnType]
+
+
+def nested_cpuize(input: dict[str, Any]) -> dict[str, Any]:
+    """Gpuize but for nested dictionaries of elements.
+
+    Args:
+    ----
+        input (dict[str, Any]): the array of the thing we want to put on the cpu
+
+    """
+    for key, value in input.items():
+        if isinstance(value, dict):
+            input[key] = nested_cpuize(value)
+        else:
+            input[key] = cpuize(value)
+    return input
 
 
 def shutdown_handler(*_):

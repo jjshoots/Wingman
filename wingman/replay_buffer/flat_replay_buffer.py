@@ -107,7 +107,7 @@ class FlatReplayBuffer(ReplayBuffer):
             # cast to the right dtype
             data = np.asarray(
                 thing,
-                dtype=self.mode_dtype,  # pyright: ignore[reportGeneralTypeIssues]
+                dtype=self.mode_dtype,  # pyright: ignore[reportArgumentType, reportCallIssue]
             )
 
             # dim check
@@ -118,7 +118,7 @@ class FlatReplayBuffer(ReplayBuffer):
             data = torch.asarray(
                 thing,
                 device=self.storage_device,
-                dtype=self.mode_dtype,  # pyright: ignore[reportGeneralTypeIssues]
+                dtype=self.mode_dtype,  # pyright: ignore[reportArgumentType]
             )
             data.requires_grad_(False)
 
@@ -182,7 +182,7 @@ class FlatReplayBuffer(ReplayBuffer):
                     [
                         self.mode_caller.zeros(
                             (self.mem_size, *item.shape),
-                            dtype=self.mode_dtype,  # pyright: ignore[reportGeneralTypeIssues]
+                            dtype=self.mode_dtype,  # pyright: ignore[reportArgumentType, reportCallIssue]
                         )
                         for item in array_data
                     ]
@@ -192,7 +192,7 @@ class FlatReplayBuffer(ReplayBuffer):
                     [
                         self.mode_caller.zeros(
                             (self.mem_size, *item.shape[1:]),
-                            dtype=self.mode_dtype,  # pyright: ignore[reportGeneralTypeIssues]
+                            dtype=self.mode_dtype,  # pyright: ignore[reportArgumentType, reportCallIssue]
                         )
                         for item in array_data
                     ]
