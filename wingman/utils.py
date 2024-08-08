@@ -52,12 +52,13 @@ def nested_gpuize(
         dtype (torch.dtype): the datatype that the returned tensor should be
 
     """
+    output = {}
     for key, value in input.items():
         if isinstance(value, dict):
-            input[key] = nested_gpuize(value, device=device, dtype=dtype)
+            output[key] = nested_gpuize(value, device=device, dtype=dtype)
         else:
-            input[key] = gpuize(value)
-    return input
+            output[key] = gpuize(value)
+    return output
 
 
 def cpuize(input: np.ndarray | torch.Tensor) -> np.ndarray:
@@ -82,12 +83,13 @@ def nested_cpuize(input: dict[str, Any]) -> dict[str, Any]:
         input (dict[str, Any]): the array of the thing we want to put on the cpu
 
     """
+    output = {}
     for key, value in input.items():
         if isinstance(value, dict):
-            input[key] = nested_cpuize(value)
+            output[key] = nested_cpuize(value)
         else:
-            input[key] = cpuize(value)
-    return input
+            output[key] = cpuize(value)
+    return output
 
 
 def shutdown_handler(*_):
