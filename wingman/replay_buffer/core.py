@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import warnings
 from abc import abstractmethod
 from typing import Any, Generator, Sequence
-import warnings
 
 from prefetch_generator import prefetch
 
@@ -20,6 +20,7 @@ class ReplayBuffer:
             mem_size (int): mem_size
 
         """
+
     @property
     @abstractmethod
     def memory(self) -> list[Any]:
