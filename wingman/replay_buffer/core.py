@@ -20,19 +20,9 @@ class ReplayBuffer:
             mem_size (int): mem_size
 
         """
-        self.mem_size: int
-
-    @property
-    @abstractmethod
-    def memory(self) -> list[Any]:
-        """The core memory of this buffer."""
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def count(self) -> int:
-        """The number of transitions that's been through this buffer."""
-        raise NotImplementedError
+        self.mem_size = mem_size
+        self.count = 0
+        self.memory = []
 
     @property
     def is_full(self) -> bool:
@@ -153,7 +143,11 @@ class ReplayBufferWrapper(ReplayBuffer):
         self.mem_size = base_buffer.mem_size
 
     @property
-    @abstractmethod
+    def count(self) -> int:
+        """The number of transitions that's been through this buffer."""
+        return self.base_buffer.count
+
+    @property
     def memory(self) -> list[Any]:
         """The core memory of this buffer."""
         warnings.warn(
@@ -162,12 +156,6 @@ class ReplayBufferWrapper(ReplayBuffer):
             category=RuntimeWarning,
         )
         return self.base_buffer.memory
-
-    @property
-    @abstractmethod
-    def count(self) -> int:
-        """The number of transitions that's been through this buffer."""
-        return self.base_buffer.count
 
     def __len__(self) -> int:
         """The number of memory items this replay buffer is holding."""
