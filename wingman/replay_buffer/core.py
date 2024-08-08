@@ -20,17 +20,12 @@ class ReplayBuffer:
             mem_size (int): mem_size
 
         """
+        self.mem_size: int
 
     @property
     @abstractmethod
     def memory(self) -> list[Any]:
         """The core memory of this buffer."""
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def mem_size(self) -> int:
-        """The maximum number of transitions this buffer holds."""
         raise NotImplementedError
 
     @property
@@ -155,7 +150,7 @@ class ReplayBufferWrapper(ReplayBuffer):
 
         """
         self.base_buffer = base_buffer
-        self.mem_size = base_buffer.mem_size  # pyright: ignore[reportAttributeAccessIssue]
+        self.mem_size = base_buffer.mem_size
 
     @property
     @abstractmethod
