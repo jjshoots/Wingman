@@ -59,7 +59,7 @@ def listed_dict_to_dicted_list(
             for dict_item in list_dict
         ]
 
-        # we can't call `concatenate` on a list of non-np.ndarray items
+        # we can't call `concatenate` on a list of non-np.ndarray or non-torch.Tensor items
         if isinstance(dicted_list[0], np.ndarray) and len(dicted_list[0].shape) > 0:
             if stack:
                 ptr[key_list[-1]] = np.stack(dicted_list, axis=0)
