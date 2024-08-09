@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import functools
 from typing import Any, Generator
+import torch
 
 import numpy as np
 
@@ -64,6 +65,11 @@ def listed_dict_to_dicted_list(
                 ptr[key_list[-1]] = np.stack(dicted_list, axis=0)
             else:
                 ptr[key_list[-1]] = np.concatenate(dicted_list, axis=0)
+        if isinstance(dicted_list[0], torch.Tensor) and len(dicted_list)
+            if stack:
+                ptr[key_list[-1]] = torch.stack(dicted_list, dim=0)
+            else:
+                ptr[key_list[-1]] = torch.concatenate(dicted_list, dim=0)
         else:
             if stack:
                 ptr[key_list[-1]] = np.expand_dims(
