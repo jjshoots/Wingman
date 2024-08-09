@@ -65,7 +65,7 @@ def listed_dict_to_dicted_list(
                 ptr[key_list[-1]] = np.stack(dicted_list, axis=0)
             else:
                 ptr[key_list[-1]] = np.concatenate(dicted_list, axis=0)
-        if isinstance(dicted_list[0], torch.Tensor) and len(dicted_list)
+        elif isinstance(dicted_list[0], torch.Tensor) and len(dicted_list):
             if stack:
                 ptr[key_list[-1]] = torch.stack(dicted_list, dim=0)
             else:
