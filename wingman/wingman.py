@@ -95,9 +95,9 @@ class Wingman:
 
         # file paths
         self._model_file: Path = (
-            self._model_directory / f"weights{self._current_ckpt}.path"
+            self._model_directory / f"weights{self._current_ckpt}.pth"
         )
-        self._optim_file: Path = self._model_directory / "optimizer_path"
+        self._optim_file: Path = self._model_directory / "optimizer.pth"
         self._lowest_loss_file: Path = self._model_directory / "lowest_loss.npy"
         self._intermediary_file: Path = self._model_directory / "weights-1.npy"
         self._log_file: Path = self._model_directory / "log.txt"
