@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pickle
+from pathlib import Path
 import warnings
 from abc import abstractmethod
 from typing import Any, Generator, Sequence
@@ -23,17 +25,6 @@ class ReplayBuffer:
         self.mem_size = mem_size
         self.count = 0
         self.memory = []
-
-    @property
-    def is_full(self) -> bool:
-        """Whether or not the replay buffer has reached capacity.
-
-        Returns
-        -------
-            bool: whether the buffer is full
-
-        """
-        return self.count >= self.mem_size
 
     def __len__(self) -> int:
         """The number of memory items this replay buffer is holding.
@@ -57,6 +48,28 @@ class ReplayBuffer:
         A brief view of the memory: \n
         {self.memory}
         """
+
+    @property
+    def is_full(self) -> bool:
+        """Whether or not the replay buffer has reached capacity.
+
+        Returns
+        -------
+            bool: whether the buffer is full
+
+        """
+        return self.count >= self.mem_size
+
+    def merge(self, other: ReplayBuffer) -> None:
+        """Merges another replay buffer into this replay buffer via the `push` method.
+
+        Args:
+            other (ReplayBuffer): other
+
+        Returns:
+            None:
+        """
+        self.push(other.memory)
 
     @prefetch(max_prefetch=1)
     def iter_sample(
