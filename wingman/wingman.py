@@ -32,10 +32,10 @@ class Wingman:
     optim = optimizer.AdamW(model.parameters(), lr=cfg.learning_rate, amsgrad=True)
 
     # get the weight files if they exist
-    have_file, weight_file, optim_file = self.get_weight_files()
+    have_file, model_dir, ckpt_dir = self.get_weight_files()
     if have_file:
-        model.load(model_file)
-        optim.load(optim_file)
+        model.load(f"{ckpt_dir}/weights.pth")
+        optim.load(f"{model_dir}/optim.pth")
 
     # run some training:
     while(training):
@@ -43,10 +43,10 @@ class Wingman:
         # training code here
         ...
 
-        update_weights, model_file, optim_file = self.checkpoint(loss, step_number)
+        update_weights, model_dir, ckpt_dir = self.checkpoint(loss, step_number)
         if update_weights:
-            model.save(model_file)
-            optim.save(optim_file)
+            model.save(f"{ckpt_dir}/weights.pth")
+            optim.save(f"{model_dir}/{ckpt_subdir}/optim.pth")
     ```
     """
 
@@ -88,41 +88,47 @@ class Wingman:
         self._current_ckpt: int = self.cfg.model.ckpt
         self._previous_ckpt: int = -1
 
-        # directory itself
-        self._model_directory: Path = Path(self.cfg.model.save_directory) / str(
-            self.cfg.model.id
-        )
-
         # file paths
-        self._model_file: Path = (
-            self._model_directory / f"weights{self._current_ckpt}.pth"
+        self._model_dir: Path = (
+            Path(self.cfg.model.save_directory)
+            / str(self.cfg.model.id)
         )
-        self._optim_file: Path = self._model_directory / "optimizer.pth"
-        self._lowest_loss_file: Path = self._model_directory / "lowest_loss.npy"
-        self._intermediary_file: Path = self._model_directory / "weights-1.npy"
-        self._log_file: Path = self._model_directory / "log.txt"
+        self._log_file: Path = self._model_dir / "log.txt"
+        self._lowest_loss_file: Path = self._model_dir / "lowest_loss.npy"
 
         wm_print("--------------𓆩𓆪--------------")
         wm_print(f"Using device {cstr(self.device, 'HEADER')}")
-        wm_print(f"Saving weights to {cstr(self._model_directory, 'HEADER')}...")
+        wm_print(f"Saving weights to {cstr(self._model_dir, 'HEADER')}...")
 
         # check to record that we're in a new training session and save the config file
-        if self._model_directory.is_dir():
+        if self._model_dir.is_dir():
             self._fresh_directory = False
         else:
             self._fresh_directory = True
             wm_print(
                 cstr(
-                    "New training instance detected, generating weights directory in 3 seconds...",
+                    "New training instance detected, generating model directory in 3 seconds...",
                     "WARNING",
                 ),
             )
             time.sleep(3)
-            self._model_directory.mkdir(parents=True, exist_ok=True)
+            self._model_dir.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(
                 config_yaml,
-                self._model_directory / "config_copy.yaml",
+                self._model_dir / "config_copy.yaml",
             )
+
+    @property
+    def _ckpt_dir(self) -> Path:
+        ckpt_dir = self._model_dir / f"{self._current_ckpt}/"
+        ckpt_dir.mkdir(parents=True, exist_ok=True)
+        return ckpt_dir
+
+    @cached_property
+    def _temp_dir(self) -> Path:
+        temp_dir = self._model_dir / f"-1/"
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        return temp_dir
 
     @cached_property
     def device(self):
@@ -185,7 +191,7 @@ class Wingman:
 
         # if we haven't passed the required number of steps
         if step < self._next_log_step:
-            return False, self._model_file, self._optim_file
+            return False, self._model_dir, self._ckpt_dir
 
         # log to wandb if needed, but only on the logging steps
         if self.cfg.wandb.enable:
@@ -204,7 +210,9 @@ class Wingman:
 
         # always print on n intervals
         wm_print(
-            f"Step {cstr(step, 'OKCYAN')}; Average Loss {cstr(f'{avg_loss:.5f}', 'OKCYAN')}; Lowest Average Loss {cstr(f'{self._lowest_cumulative_lost:.5f}', 'OKCYAN')}",
+            f"Step {cstr(step, 'OKCYAN')}; "
+            f"Average Loss {cstr(f'{avg_loss:.5f}', 'OKCYAN')}; "
+            f"Lowest Average Loss {cstr(f'{self._lowest_cumulative_lost:.5f}', 'OKCYAN')}",
             self.cfg.logging.filename,
         )
 
@@ -214,15 +222,16 @@ class Wingman:
             # accumulate skips
             if self._skips < self.cfg.logging.max_skips:
                 self._skips += 1
-                return False, self._model_file, self._optim_file
+                return False, self._model_dir, self._ckpt_dir
             else:
                 # save the network to intermediary if we crossed the max number of skips
                 wm_print(
-                    f"Passed {self.cfg.logging.max_skips} intervals without saving so far, saving weights to: {cstr(self._intermediary_file, 'OKCYAN')}",
+                    f"Passed {self.cfg.logging.max_skips} intervals without saving so far. "
+                    f"Issuing new checkpoint directory: {cstr(self._temp_dir, 'OKCYAN')}",
                     self.cfg.logging.filename,
                 )
                 self._skips = 0
-                return True, self._intermediary_file, self._optim_file
+                return True, self._model_dir, self._temp_dir
 
         """NEW LOSS IS BETTER"""
         # redefine the new lowest loss and reset the skips
@@ -232,17 +241,15 @@ class Wingman:
         # increment means return the files with incremented checkpoint number
         if self.cfg.model.increment_ckpt:
             # check if we are safe to increment checkpoint numbers and regenerate weights file
-            if self._previous_ckpt == -1 or self._model_file.exists():
+            if self._previous_ckpt == -1 or self._ckpt_dir.exists():
                 self._previous_ckpt = self._current_ckpt
-                self._model_file = (
-                    self._model_directory / f"weights{self._current_ckpt}.pth"
-                )
                 self._current_ckpt += 1
 
             else:
                 wm_print(
                     cstr(
-                        "Didn't save weights file for the previous checkpoint number (self.ckpt_number), not incrementing checkpoint number.",
+                        f"Didn't populate previous checkpoint directory ({self._ckpt_dir}). "
+                        "Therefore, not incrementing checkpoint number.",
                         "WARNING",
                     ),
                     self.cfg.logging.filename,
@@ -253,11 +260,11 @@ class Wingman:
         np.save(self._lowest_loss_file, self._lowest_cumulative_lost)
 
         wm_print(
-            f"New lowest point, saving weights to: {cstr(self._model_file, 'OKGREEN')}",
+            f"New lowest point, issuing new checkpoint directory: {cstr(self._ckpt_dir, 'OKGREEN')}",
             self.cfg.logging.filename,
         )
 
-        return True, self._model_file, self._optim_file
+        return True, self._model_dir, self._ckpt_dir
 
     def wandb_log(self) -> None:
         """wandb_log.
@@ -300,7 +307,7 @@ class Wingman:
             raise WingmanException(
                 cstr("Data must be only 1 dimensional ndarray", "FAIL")
             )
-        filename = self._model_directory / f"{variable_name}.csv"
+        filename = self._model_dir / f"{variable_name}.csv"
         with open(filename, "ab") as f:
             np.savetxt(f, [data], delimiter=",", fmt=precision)
 
@@ -323,66 +330,53 @@ class Wingman:
         """
         # if we don't need the latest file, get the one specified
         if not latest:
-            if os.path.isfile(self._model_file):
-                self._model_file = (
-                    self._model_directory / f"weights{self._current_ckpt}.pth"
-                )
+            ckpt_dir = self._model_dir / f"{self._current_ckpt}/"
+            if ckpt_dir.exists():
                 wm_print(
-                    f"Using weights file: {cstr(f'{self._model_directory}/weights{self._current_ckpt}.pth', 'OKGREEN')}",
+                    f"Using checkpoint directory: {cstr(f'{self._ckpt_dir}', 'OKGREEN')}",
                     self.cfg.logging.filename,
                 )
-                return True, self._model_file, self._optim_file
+                return True, self._model_dir, self._ckpt_dir
             else:
                 raise ValueError(
                     cstr(
-                        f"Checkpoint number {self._current_ckpt} was requested, but it doesn't exist.",
+                        f"Checkpoint number {self._current_ckpt} was requested, "
+                        f"but checkpoint directory {ckpt_dir} does not exist.",
                         "FAIL",
                     )
                 )
 
         # while the file exists, try to look for a file one checkpoint later
-        self._current_ckpt = 0
-        while self._model_file.is_file():
-            self._current_ckpt += 1
-            self._model_file = (
-                self._model_directory / f"weights{self._current_ckpt}.pth"
-            )
-
         # once the checkpoint doesn't exist, decrement by one and use that file
+        self._current_ckpt = 0
+        while (self._model_dir / f"{self._current_ckpt}/").exists():
+            self._current_ckpt += 1
         self._current_ckpt = max(self._current_ckpt - 1, 0)
-        self._model_file = self._model_directory / f"weights{self._current_ckpt}.pth"
 
         # if the file doesn't exist, notify and ignore
-        if not self._model_file.is_file():
+        if not (self._model_dir / f"{self._current_ckpt}/").exists():
             if not self._fresh_directory:
                 wm_print(
                     cstr(
-                        "No weights file found, generating new one during training.",
+                        "No checkpoint directory found, generating new one during training.",
                         "WARNING",
                     ),
                     self.cfg.logging.filename,
                 )
             self._fresh_directory = False
 
-            return False, self._model_file, self._optim_file
+            return False, self._model_dir, self._ckpt_dir
         else:
             # hitch a ride to update the lowest running loss
             self._lowest_cumulative_lost = np.load(self._lowest_loss_file).item()
 
             wm_print(
-                f"Using weights file: {cstr(f'{self._model_directory}/weights{self._current_ckpt}.pth', 'OKGREEN')}",
+                f"Using checkpoint directory: {cstr(f'{self._ckpt_dir}', 'OKGREEN')}",
                 self.cfg.logging.filename,
             )
             wm_print(
-                f"Lowest Running Loss for Net: {cstr(self._lowest_cumulative_lost, 'OKCYAN')}",
+                f"Lowest Running Loss: {cstr(self._lowest_cumulative_lost, 'OKCYAN')}",
                 self.cfg.logging.filename,
             )
 
-            # check if the optim file exists
-            if not os.path.isfile(self._optim_file):
-                wm_print(
-                    cstr("Optim file not found, please be careful!", "WARNING"),
-                    self.cfg.logging.filename,
-                )
-
-            return True, self._model_file, self._optim_file
+            return True, self._model_dir, self._ckpt_dir
