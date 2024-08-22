@@ -32,10 +32,10 @@ class Wingman:
     optim = optimizer.AdamW(model.parameters(), lr=cfg.learning_rate, amsgrad=True)
 
     # get the weight files if they exist
-    have_file, weight_file, optim_file = self.get_weight_files()
+    have_file, save_dir, ckpt_num = self.get_weight_files()
     if have_file:
-        model.load(model_file)
-        optim.load(optim_file)
+        model.load(f"{save_dir}/{ckpt_num}.pth")
+        optim.load(f"{save_dir}/optim.pth")
 
     # run some training:
     while(training):
@@ -43,10 +43,10 @@ class Wingman:
         # training code here
         ...
 
-        update_weights, model_file, optim_file = self.checkpoint(loss, step_number)
-        if update_weights:
-            model.save(model_file)
-            optim.save(optim_file)
+        update_weights, save_dir, ckpt_num = self.checkpoint(loss, step_number)
+        if have_file:
+            model.load(f"{save_dir}/{ckpt_num}.pth")
+            optim.load(f"{save_dir}/optim.pth")
     ```
     """
 
@@ -97,7 +97,6 @@ class Wingman:
         self._model_file: Path = (
             self._model_directory / f"weights{self._current_ckpt}.pth"
         )
-        self._optim_file: Path = self._model_directory / "optimizer.pth"
         self._lowest_loss_file: Path = self._model_directory / "lowest_loss.npy"
         self._intermediary_file: Path = self._model_directory / "weights-1.npy"
         self._log_file: Path = self._model_directory / "log.txt"
@@ -145,15 +144,15 @@ class Wingman:
 
     def checkpoint(
         self, loss: float, step: int | None = None
-    ) -> tuple[bool, Path, Path]:
+    ) -> tuple[bool, Path, int]:
         """checkpoint.
 
         Records training every logging_interval steps.
 
         Returns three things:
         - indicator on whether we should save weights
-        - path of where the weight files should be saved
-        - path of where the optim files should be saved
+        - directory of where the files should be stored
+        - the current checkpoint number
 
         Args:
         ----
@@ -162,7 +161,7 @@ class Wingman:
 
         Returns:
         -------
-            tuple[bool, Path, Path]: to_update, weights_file, optim_file
+            tuple[bool, Path, int]: to_update, save_dir, ckpt_num
 
         """
         # if step is None, we automatically increment
@@ -185,7 +184,7 @@ class Wingman:
 
         # if we haven't passed the required number of steps
         if step < self._next_log_step:
-            return False, self._model_file, self._optim_file
+            return False, self._model_file
 
         # log to wandb if needed, but only on the logging steps
         if self.cfg.wandb.enable:
@@ -214,7 +213,7 @@ class Wingman:
             # accumulate skips
             if self._skips < self.cfg.logging.max_skips:
                 self._skips += 1
-                return False, self._model_file, self._optim_file
+                return False, self._model_file
             else:
                 # save the network to intermediary if we crossed the max number of skips
                 wm_print(
@@ -222,7 +221,7 @@ class Wingman:
                     self.cfg.logging.filename,
                 )
                 self._skips = 0
-                return True, self._intermediary_file, self._optim_file
+                return True, self._intermediary_file
 
         """NEW LOSS IS BETTER"""
         # redefine the new lowest loss and reset the skips
@@ -257,7 +256,7 @@ class Wingman:
             self.cfg.logging.filename,
         )
 
-        return True, self._model_file, self._optim_file
+        return True, self._model_file
 
     def wandb_log(self) -> None:
         """wandb_log.
@@ -310,7 +309,6 @@ class Wingman:
         Returns three things:
         - indicator on whether we have weight files
         - directory of where the weight files are
-        - directory of where the optim files are
 
         Args:
         ----
@@ -318,7 +316,7 @@ class Wingman:
 
         Returns:
         -------
-            tuple[bool, Path, Path]: have_file, weights_file, optim_file
+            tuple[bool, Path, Path]: have_file, weights_file
 
         """
         # if we don't need the latest file, get the one specified
@@ -331,7 +329,7 @@ class Wingman:
                     f"Using weights file: {cstr(f'{self._model_directory}/weights{self._current_ckpt}.pth', 'OKGREEN')}",
                     self.cfg.logging.filename,
                 )
-                return True, self._model_file, self._optim_file
+                return True, self._model_file
             else:
                 raise ValueError(
                     cstr(
@@ -364,7 +362,7 @@ class Wingman:
                 )
             self._fresh_directory = False
 
-            return False, self._model_file, self._optim_file
+            return False, self._model_file
         else:
             # hitch a ride to update the lowest running loss
             self._lowest_cumulative_lost = np.load(self._lowest_loss_file).item()
@@ -378,11 +376,4 @@ class Wingman:
                 self.cfg.logging.filename,
             )
 
-            # check if the optim file exists
-            if not os.path.isfile(self._optim_file):
-                wm_print(
-                    cstr("Optim file not found, please be careful!", "WARNING"),
-                    self.cfg.logging.filename,
-                )
-
-            return True, self._model_file, self._optim_file
+            return True, self._model_file
