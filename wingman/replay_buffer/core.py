@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pickle
-from pathlib import Path
 import warnings
 from abc import abstractmethod
 from typing import Any, Generator, Sequence
@@ -64,10 +62,13 @@ class ReplayBuffer:
         """Merges another replay buffer into this replay buffer via the `push` method.
 
         Args:
+        ----
             other (ReplayBuffer): other
 
         Returns:
+        -------
             None:
+
         """
         self.push(other.memory)
 

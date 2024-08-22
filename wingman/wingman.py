@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-import os
 import shutil
 import time
 from functools import cached_property
@@ -89,9 +88,8 @@ class Wingman:
         self._previous_ckpt: int = -1
 
         # file paths
-        self._model_dir: Path = (
-            Path(self.cfg.model.save_directory)
-            / str(self.cfg.model.id)
+        self._model_dir: Path = Path(self.cfg.model.save_directory) / str(
+            self.cfg.model.id
         )
         self._log_file: Path = self._model_dir / "log.txt"
         self._lowest_loss_file: Path = self._model_dir / "lowest_loss.npy"
@@ -126,7 +124,7 @@ class Wingman:
 
     @cached_property
     def _temp_dir(self) -> Path:
-        temp_dir = self._model_dir / f"-1/"
+        temp_dir = self._model_dir / "-1/"
         temp_dir.mkdir(parents=True, exist_ok=True)
         return temp_dir
 
