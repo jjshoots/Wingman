@@ -1,7 +1,10 @@
 """CLI functionality of Wingman."""
 
+from __future__ import annotations
+
 import glob
 import os
+import re
 import shutil
 import sys
 
@@ -36,59 +39,64 @@ def compress_weights():
     # get the original filesize
     original_size = _get_dir_size(target_dir)
 
-    # all versions
-    versions = glob.glob(f"./{target_dir}/Version*")
+    # all ids
+    id_dirs = glob.glob(f"./{target_dir}/*")
 
     # which folders to delete
-    empty_versions = []
+    empty_ids = []
 
     # start going through each folder
-    for version in versions:
-        marks = glob.glob(os.path.join(version, "weights*.pth"))
+    for id_dir in id_dirs:
+        mark_dirs = [
+            f
+            for f in glob.glob(os.path.join(id_dir, "*"))
+            if (re.compile(r"^-?\d+$").match(f.split("/")[-1]) and os.path.isdir(f))
+        ]
+        print(mark_dirs)
 
         # if no weights files
-        if len(marks) == 0:
-            empty_versions.append(version)
+        if len(mark_dirs) == 0:
+            empty_ids.append(id_dir)
             continue
 
         # start finding the latest file
-        mark_number = 0
-        latest_mark = os.path.join(version, f"weights{mark_number}.pth")
-        while latest_mark in marks:
+        _mark_number = 0
+        latest_mark_dir = os.path.join(id_dir, f"{_mark_number}")
+        while latest_mark_dir in mark_dirs:
             # as long as it exists, increment it
-            mark_number += 1
-            latest_mark = os.path.join(version, f"weights{mark_number}.pth")
+            _mark_number += 1
+            latest_mark_dir = os.path.join(id_dir, f"{_mark_number}")
 
         # remove the latest mark number from the list, we want to keep this
-        mark_number = min(0, mark_number - 1)
-        latest_mark = os.path.join(version, f"weights{mark_number}.pth")
-        if latest_mark in marks:
-            marks.remove(latest_mark)
+        _mark_number = min(0, _mark_number - 1)
+        latest_mark_dir = os.path.join(id_dir, f"{_mark_number}")
+        if latest_mark_dir in mark_dirs:
+            mark_dirs.remove(latest_mark_dir)
 
         # remove the intermediary from our list if it's there
-        intermediary = os.path.join(version, "weights-1.pth")
-        if intermediary in marks:
-            marks.remove(intermediary)
+        intermediary = os.path.join(id_dir, "-1")
+        if intermediary in mark_dirs:
+            mark_dirs.remove(intermediary)
 
         # exit if nothing to delete
-        if len(marks) == 0:
-            wm_print(f"Nothing to compress in {cstr(version, 'OKGREEN')}.")
+        if len(mark_dirs) == 0:
+            wm_print(f"Nothing to compress in {cstr(id_dir, 'OKGREEN')}.")
             continue
 
         # for the remainder of the list, delete all the weights
-        wm_print(f"Compressing {version}...")
-        for weight in marks:
-            os.remove(weight)
+        wm_print(f"Compressing {id_dir}...")
+        for mark_dir in mark_dirs:
+            shutil.rmtree(mark_dir)
 
         # rename the latest weights to 0
-        os.rename(latest_mark, os.path.join(version, "weights0.pth"))
+        os.rename(latest_mark_dir, os.path.join(id_dir, "0"))
 
-        wm_print(f"Compressed {cstr(version, 'WARNING')}.")
+        wm_print(f"Compressed {cstr(id_dir, 'WARNING')}.")
 
     # delete flagged directories
-    for version in empty_versions:
-        shutil.rmtree(version, ignore_errors=False, onerror=None)
-        wm_print(f"Deleted {cstr(version, 'WARNING')}.")
+    for id_dir in empty_ids:
+        shutil.rmtree(id_dir)
+        wm_print(f"Deleted {cstr(id_dir, 'WARNING')}.")
 
     # get the final filesize
     final_size = _get_dir_size(target_dir)
