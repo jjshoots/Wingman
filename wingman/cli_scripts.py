@@ -52,7 +52,6 @@ def compress_weights():
             for f in glob.glob(os.path.join(id_dir, "*"))
             if (re.compile(r"^-?\d+$").match(f.split("/")[-1]) and os.path.isdir(f))
         ]
-        print(mark_dirs)
 
         # if no weights files
         if len(mark_dirs) == 0:
