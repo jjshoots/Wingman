@@ -71,7 +71,7 @@ class ReplayBuffer:
 
         """
         self.push(
-            [m[:min(other.mem_size, other.count)] for m in other.memory],
+            [m[: min(other.mem_size, other.count)] for m in other.memory],
             bulk=True,
         )
 
