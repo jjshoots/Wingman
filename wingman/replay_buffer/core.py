@@ -174,6 +174,34 @@ class ReplayBufferWrapper(ReplayBuffer):
         )
         return self.base_buffer.memory
 
+    def merge(self, other: ReplayBuffer) -> None:
+        """Merges another replay buffer into this replay buffer via the `push` method.
+
+        Args:
+        ----
+            other (ReplayBuffer): other
+
+        Returns:
+        -------
+            None:
+
+        """
+        # can't merge when the other one has 0 items
+        assert other.count > 0
+
+        # if no count, we need to manually push one item first to build the index
+        if self.count == 0:
+            self.push(other[0])
+
+        # if the other only has one item, our merge is done
+        if other.count == 1:
+            return
+
+        self.base_buffer.push(
+            [m[1 : min(other.mem_size, other.count)] for m in other.memory],
+            bulk=True,
+        )
+
     def __len__(self) -> int:
         """The number of memory items this replay buffer is holding."""
         return len(self.base_buffer)
