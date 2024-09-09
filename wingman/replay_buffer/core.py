@@ -70,7 +70,10 @@ class ReplayBuffer:
             None:
 
         """
-        self.push(other.memory)
+        self.push(
+            [m[:min(other.mem_size, other.count)] for m in other.memory],
+            bulk=True,
+        )
 
     @prefetch(max_prefetch=1)
     def iter_sample(
