@@ -12,7 +12,6 @@ except ImportError:
 
     warnings.warn(
         "Could not import torch, "
-        "this is not bundled as part of Wingman and has to be installed manually, "
-        "as a result, `NeuralBlocks` and `ReplayBuffer` are unavailable.",
+        "this is not bundled as part of Wingman and has to be installed manually.",
         category=RuntimeWarning,
     )

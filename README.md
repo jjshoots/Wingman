@@ -240,57 +240,6 @@ The Neural Blocks module also has functions that can generate single modules, re
 
 <br>
 
-### `from wingman.replay_buffer import FlatReplayBuffer as ReplayBuffer`
-
-This is a replay buffer designed around Torch's Dataloader class for reinforcement learning projects.
-This allows easy bootstrapping of the Dataloader's excellent shuffling and pre-batching capabilities.
-In addition, all the data is stored as a numpy array in a contiguous block of memory, allowing very fast retrieval.
-ReplayBuffer also doesn't put any limits on tuple length per transition; some people prefer to store $\{S, A, R, S'\}$, some prefer to store $\{S, A, R, S', A'\}$ - ReplayBuffer doesn't care!
-The length of the tuple can be as long or as short as you want, as long as every tuple fed in is the same length and each element of the tuple is the same shape.
-There is no need to predefine the shape of the inputs that you want to put in the ReplayBuffer, it automatically infers the shape and computes memory usage upon the first tuple stored.
-The basic usage of the ReplayBuffer is as follows:
-
-```python
-import torch
-
-from wingman.replay_buffer import FlatReplayBuffer as ReplayBuffer
-
-# we define the replay buffer to be able to store 1000 tuples of information
-memory = ReplayBuffer(mem_size=1000)
-
-# get the first observation from the environment
-next_obs = env.reset()
-
-# iterate until the environment is complete
-while env.done is False:
-    # rollover the observation
-    obs = next_obs
-
-    # get an action from the policy
-    act = policy(obs)
-
-    # sample a new transition
-    next_obs, rew, done, next_lbl = env.step(act)
-
-    # store stuff in the replay buffer
-    memory.push((obs, act, rew, next_obs, done))
-
-# perform training using the buffer
-dataloader = torch.utils.data.DataLoader(
-    memory, batch_size=32, shuffle=True, drop_last=False
-)
-
-# easily treat the replay buffer as an iterable that we can iterate through
-for batch_num, stuff in enumerate(dataloader):
-    observations = gpuize(stuff[0], "cuda:0")
-    actions = gpuize(stuff[1], "cuda:0")
-    rewards = gpuize(stuff[2], "cuda:0")
-    next_states = gpuize(stuff[3], "cuda:0")
-    dones = gpuize(stuff[4], "cuda:0")
-```
-
-
-<br>
 
 ### `from wingman import gpuize, cpuize`
 
