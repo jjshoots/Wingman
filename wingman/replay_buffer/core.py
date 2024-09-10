@@ -193,14 +193,19 @@ class ReplayBufferWrapper(ReplayBuffer):
         if self.count == 0:
             self.push(other[0])
 
-        # if the other only has one item, our merge is done
-        if other.count == 1:
-            return
+            if other.mem_size == 1:
+                return
 
-        self.base_buffer.push(
-            [m[1 : min(other.mem_size, other.count)] for m in other.memory],
-            bulk=True,
-        )
+            self.base_buffer.push(
+                [m[1 : min(other.mem_size, other.count)] for m in other.memory],
+                bulk=True,
+            )
+        else:
+            self.base_buffer.push(
+                [m[: min(other.mem_size, other.count)] for m in other.memory],
+                bulk=True,
+            )
+
 
     def __len__(self) -> int:
         """The number of memory items this replay buffer is holding."""
