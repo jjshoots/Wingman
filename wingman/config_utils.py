@@ -157,12 +157,14 @@ def dict_cli_overrides(config_dict: dict[str, Any]) -> dict[str, Any]:
         parser=argparse.ArgumentParser(allow_abbrev=False),
         nested_dict=config_dict,
     ).parse_known_args()
-    wm_print(
-        cstr(
-            f"Ignoring unknown options {unknown_args}",
-            "WARNING",
-        ),
-    )
+    if unknown_args:
+        wm_print("---------------------------------------------")
+        wm_print(
+            cstr(
+                f"Ignoring unknown CLI options {unknown_args}",
+                "WARNING",
+            ),
+        )
 
     # pull out each item in the raw overrides and
     # replace the variable within the main config
