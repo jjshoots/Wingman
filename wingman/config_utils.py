@@ -26,25 +26,35 @@ class LockedNamespace(types.SimpleNamespace):
             )
         super().__setattr__(name, value)
 
+    def to_dict(self) -> dict[str, Any]:
+        """to_dict.
 
-def dict_to_locked_ns(nested_dict: dict[str, Any]) -> LockedNamespace:
-    """dict_to_ns.
+        Args:
 
-    Args:
-    ----
-        nested_dict (dict[str, Any]): nested_dict
-
-    Returns:
-    -------
-        types.SimpleNamespace:
-
-    """
-    return LockedNamespace(
-        **{
-            k: (dict_to_locked_ns(v) if isinstance(v, dict) else v)
-            for k, v in nested_dict.items()
+        Returns:
+            dict[str, Any]:
+        """
+        return {
+            k: (v.to_dict() if isinstance(v, LockedNamespace) else v)
+            for k, v in vars(self).items()
         }
-    )
+
+    @staticmethod
+    def from_dict(nested_dict: dict[str, Any]) -> "LockedNamespace":
+        """from_dict.
+
+        Args:
+            nested_dict (dict[str, Any]): nested_dict
+
+        Returns:
+            "LockedNamespace":
+        """
+        return LockedNamespace(
+            **{
+                k: (LockedNamespace.from_dict(v) if isinstance(v, dict) else v)
+                for k, v in nested_dict.items()
+            }
+        )
 
 
 def check_dict_superset(base: dict[str, Any], target: dict[str, Any]) -> bool:
@@ -206,4 +216,4 @@ def generate_wingman_config(config_yaml: Path | str) -> LockedNamespace:
             raise NotImplementedError("Save code is not yet implemented.")
             wandb.run.log_code(".", exclude_fn=lambda path: "venv" in path)
 
-    return dict_to_locked_ns(config_dict)
+    return LockedNamespace.from_dict(config_dict)
