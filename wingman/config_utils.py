@@ -30,7 +30,8 @@ class LockedNamespace(types.SimpleNamespace):
     def to_dict(self) -> dict[str, Any]:
         """to_dict.
 
-        Returns:
+        Returns
+        -------
             dict[str, Any]:
 
         """
@@ -44,9 +45,11 @@ class LockedNamespace(types.SimpleNamespace):
         """from_dict.
 
         Args:
+        ----
             nested_dict (dict[str, Any]): nested_dict
 
         Returns:
+        -------
             "LockedNamespace":
 
         """
@@ -62,10 +65,12 @@ def check_dict_superset(base: dict[str, Any], target: dict[str, Any]) -> bool:
     """Checks that the `base` is a superset of the `target`.
 
     Args:
+    ----
         base (dict[str, Any]): base
         target (dict[str, Any]): target
 
     Returns:
+    -------
         bool:
 
     """
@@ -95,9 +100,11 @@ def dict_cli_overrides(config_dict: dict[str, Any]) -> dict[str, Any]:
     ```
 
     Args:
+    ----
         config_dict (dict[str, Any]): a nested dictionary of values.
 
     Returns:
+    -------
         dict[str, Any]: an altered nested dictionary.
 
     """
@@ -110,11 +117,13 @@ def dict_cli_overrides(config_dict: dict[str, Any]) -> dict[str, Any]:
         """Builds an argparser by recursively nesting arguments.
 
         Args:
+        ----
             parser (argparse.ArgumentParser): parser
             nested_dict (dict[str, Any]): nested_dict
             basename (str): basename
 
         Returns:
+        -------
             argparse.ArgumentParser: the resulting argparser with nested arguments.
 
         """

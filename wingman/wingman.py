@@ -56,6 +56,7 @@ class Wingman:
         """__init__.
 
         Args:
+        ----
             config_yaml (str): location of where the config yaml is described
 
         """
@@ -159,10 +160,12 @@ class Wingman:
         - path of where the optim files should be saved
 
         Args:
+        ----
             loss (float): learning loss of the model as a detached float
             step (int | None): step number, automatically incremented if None
 
         Returns:
+        -------
             tuple[bool, Path, Path]: to_update, weights_file, optim_file
 
         """
@@ -271,6 +274,7 @@ class Wingman:
         ```
 
         Returns
+        -------
             None:
 
         """
@@ -287,11 +291,13 @@ class Wingman:
         """write_auxiliary.
 
         Args:
+        ----
             data (np.ndarray): data
             variable_name (str): variable_name
             precision (str): precision
 
         Returns:
+        -------
             None:
 
         """
@@ -312,9 +318,11 @@ class Wingman:
         - directory of where the optim files are
 
         Args:
+        ----
             latest (bool): whether we want the latest file or the one determined by `ckpt_number`
 
         Returns:
+        -------
             tuple[bool, Path, Path]: have_file, weights_file, optim_file
 
         """

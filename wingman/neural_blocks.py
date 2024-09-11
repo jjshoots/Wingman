@@ -34,6 +34,7 @@ class NeuralBlocks:
         """conv_module.
 
         Args:
+        ----
             in_channel (int): in_channel
             out_channel (int): out_channel
             kernel_size (int): kernel_size
@@ -44,6 +45,7 @@ class NeuralBlocks:
             norm (str): norm
 
         Returns:
+        -------
             nn.Sequential:
 
         """
@@ -99,6 +101,7 @@ class NeuralBlocks:
         """linear_module.
 
         Args:
+        ----
             in_features (int): in_features
             out_features (int): out_features
             activation (str): activation
@@ -106,6 +109,7 @@ class NeuralBlocks:
             bias (bool): bias
 
         Returns:
+        -------
             nn.Sequential:
 
         """
@@ -139,6 +143,7 @@ class NeuralBlocks:
         """deconv_module.
 
         Args:
+        ----
             in_channel (int): in_channel
             out_channel (int): out_channel
             kernel_size (int): kernel_size
@@ -148,6 +153,7 @@ class NeuralBlocks:
             norm (str): norm
 
         Returns:
+        -------
             nn.Sequential:
 
         """
@@ -180,9 +186,11 @@ class NeuralBlocks:
         """get_activation.
 
         Args:
+        ----
             activation (str): activation
 
         Returns:
+        -------
             nn.Module:
 
         """
@@ -206,11 +214,13 @@ class NeuralBlocks:
         """get_normalization.
 
         Args:
+        ----
             activation (str): activation
             num_features (int): num_features
             dimension (int): dimension
 
         Returns:
+        -------
             nn.Module:
 
         """
@@ -242,6 +252,7 @@ class NeuralBlocks:
         """generate_conv_stack.
 
         Args:
+        ----
             channels_description (List[int]): channels_description
             kernels_description (List[int]): kernels_description
             pooling_description (List[int]): pooling_description
@@ -250,6 +261,7 @@ class NeuralBlocks:
             norm (str): norm
 
         Returns:
+        -------
             nn.Sequential:
 
         """
@@ -293,6 +305,7 @@ class NeuralBlocks:
         """generate_deconv_stack.
 
         Args:
+        ----
             channels_description (List[int]): channels_description
             kernels_description (List[int]): kernels_description
             padding_description (List[int]): padding_description
@@ -301,6 +314,7 @@ class NeuralBlocks:
             norm (str): norm
 
         Returns:
+        -------
             nn.Sequential:
 
         """
@@ -343,12 +357,14 @@ class NeuralBlocks:
         """generate_linear_stack.
 
         Args:
+        ----
             features_description (List[int]): features_description
             activation_description (List[str]): activation_description
             norm (str): norm
             bias (bool): bias
 
         Returns:
+        -------
             nn.Sequential:
 
         """

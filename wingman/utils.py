@@ -26,6 +26,7 @@ def gpuize(
     """gpuize.
 
     Args:
+    ----
         input (np.ndarray | torch.Tensor): the array that we want to gpuize
         device (str | torch.device): a string of the device we want to move the thing to
         dtype (torch.dtype): the datatype that the returned tensor should be
@@ -45,6 +46,7 @@ def nested_gpuize(
     """Gpuize but for nested dictionaries of elements.
 
     Args:
+    ----
         input (dict[str, Any]): the array that we want to gpuize
         device (str | torch.device): a string of the device we want to move the thing to
         dtype (torch.dtype): the datatype that the returned tensor should be
@@ -63,6 +65,7 @@ def cpuize(input: np.ndarray | torch.Tensor) -> np.ndarray:
     """cpuize.
 
     Args:
+    ----
         input (np.ndarray | torch.Tensor): the array of the thing we want to put on the cpu
 
     """
@@ -76,6 +79,7 @@ def nested_cpuize(input: dict[str, Any]) -> dict[str, Any]:
     """Gpuize but for nested dictionaries of elements.
 
     Args:
+    ----
         input (dict[str, Any]): the array of the thing we want to put on the cpu
 
     """
@@ -92,6 +96,7 @@ def shutdown_handler(*_):
     """shutdown_handler.
 
     Args:
+    ----
         _:
 
     """
