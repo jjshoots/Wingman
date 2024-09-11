@@ -161,7 +161,7 @@ def dict_cli_overrides(config_dict: dict[str, Any]) -> dict[str, Any]:
         wm_print("---------------------------------------------")
         wm_print(
             cstr(
-                f"Ignoring unknown CLI options {unknown_args}",
+                f"Ignoring unknown CLI options {unknown_args}.",
                 "WARNING",
             ),
         )
