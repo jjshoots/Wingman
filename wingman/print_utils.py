@@ -29,12 +29,10 @@ def cstr(
     """Makes a string colourful.
 
     Args:
-    ----
         x (Any): the string
         ctype (str): the colour
 
     Returns:
-    -------
         str: the coloured string
 
     """
@@ -49,7 +47,6 @@ def wm_print(x: Any, log_file: Path | str = ""):
     """Prints out strings decorated with the wingman status.
 
     Args:
-    ----
         x (Any): the input string
         log_file (str): a target path to save the log file if any
 

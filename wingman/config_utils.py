@@ -12,6 +12,7 @@ import wandb
 import yaml
 
 from wingman.exceptions import WingmanException
+from wingman.print_utils import cstr, wm_print
 
 
 class LockedNamespace(types.SimpleNamespace):
@@ -29,10 +30,9 @@ class LockedNamespace(types.SimpleNamespace):
     def to_dict(self) -> dict[str, Any]:
         """to_dict.
 
-        Args:
-
         Returns:
             dict[str, Any]:
+
         """
         return {
             k: (v.to_dict() if isinstance(v, LockedNamespace) else v)
@@ -48,6 +48,7 @@ class LockedNamespace(types.SimpleNamespace):
 
         Returns:
             "LockedNamespace":
+
         """
         return LockedNamespace(
             **{
@@ -61,12 +62,10 @@ def check_dict_superset(base: dict[str, Any], target: dict[str, Any]) -> bool:
     """Checks that the `base` is a superset of the `target`.
 
     Args:
-    ----
         base (dict[str, Any]): base
         target (dict[str, Any]): target
 
     Returns:
-    -------
         bool:
 
     """
@@ -96,11 +95,9 @@ def dict_cli_overrides(config_dict: dict[str, Any]) -> dict[str, Any]:
     ```
 
     Args:
-    ----
         config_dict (dict[str, Any]): a nested dictionary of values.
 
     Returns:
-    -------
         dict[str, Any]: an altered nested dictionary.
 
     """
@@ -113,13 +110,11 @@ def dict_cli_overrides(config_dict: dict[str, Any]) -> dict[str, Any]:
         """Builds an argparser by recursively nesting arguments.
 
         Args:
-        ----
             parser (argparse.ArgumentParser): parser
             nested_dict (dict[str, Any]): nested_dict
             basename (str): basename
 
         Returns:
-        -------
             argparse.ArgumentParser: the resulting argparser with nested arguments.
 
         """
@@ -148,16 +143,21 @@ def dict_cli_overrides(config_dict: dict[str, Any]) -> dict[str, Any]:
 
         return parser
 
-    # recursively convert arguments to cli args
-    raw_overrides = vars(
-        nested_argparse(
-            parser=argparse.ArgumentParser(allow_abbrev=False),
-            nested_dict=config_dict,
-        ).parse_args()
+    # recursively convert cli args to override arguments
+    known_args, unknown_args = nested_argparse(
+        parser=argparse.ArgumentParser(allow_abbrev=False),
+        nested_dict=config_dict,
+    ).parse_known_args()
+    wm_print(
+        cstr(
+            f"Ignoring unknown options {unknown_args}",
+            "WARNING",
+        ),
     )
 
     # pull out each item in the raw overrides and
     # replace the variable within the main config
+    raw_overrides = vars(known_args)
     for joint_k, v in raw_overrides.items():
         k_list = joint_k.split(sep=".")
         current = config_dict

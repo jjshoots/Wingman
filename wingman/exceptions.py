@@ -10,7 +10,6 @@ class WingmanException(Exception):
         """__init__.
 
         Args:
-        ----
             message (str): the message
 
         """
@@ -26,7 +25,6 @@ class NeuralBlocksException(Exception):
         """__init__.
 
         Args:
-        ----
             message (str): the message
 
         """
