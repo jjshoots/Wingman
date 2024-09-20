@@ -211,7 +211,7 @@ def generate_wingman_config(config_yaml: Path | str) -> LockedNamespace:
                 f'{config_dict["wandb"]["run"]["name"]}, v={config_dict["model"]["id"]}'
             )
         else:
-            run_name = config_dict["wandb"]["model"]["id"]
+            run_name = config_dict["model"]["id"]
 
         # initialize wandb
         wandb.init(
