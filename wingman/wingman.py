@@ -45,7 +45,7 @@ class Wingman:
         update_weights, model_dir, ckpt_dir = self.checkpoint(loss, step_number)
         if update_weights:
             model.save(f"{ckpt_dir}/weights.pth")
-            optim.save(f"{model_dir}/{ckpt_subdir}/optim.pth")
+            optim.save(f"{model_dir}/optim.pth")
     ```
     """
 
@@ -156,8 +156,8 @@ class Wingman:
 
         Returns three things:
         - indicator on whether we should save weights
-        - path of where the weight files should be saved
-        - path of where the optim files should be saved
+        - path of the model directory (ie: "/home/you/project/weights/12345/")
+        - path of the checkpoint directory (ie: "/home/you/project/weights/12345/0/")
 
         Args:
         ----
@@ -166,7 +166,7 @@ class Wingman:
 
         Returns:
         -------
-            tuple[bool, Path, Path]: to_update, weights_file, optim_file
+            tuple[bool, Path, Path]: to_update, model_dir, ckpt_dir
 
         """
         # if step is None, we automatically increment
@@ -313,17 +313,17 @@ class Wingman:
         """get_weight_files.
 
         Returns three things:
-        - indicator on whether we have weight files
-        - directory of where the weight files are
-        - directory of where the optim files are
+        - indicator on whether we should save weights
+        - path of the model directory (ie: "/home/you/project/weights/12345/")
+        - path of the checkpoint directory (ie: "/home/you/project/weights/12345/0/")
 
         Args:
         ----
-            latest (bool): whether we want the latest file or the one determined by `ckpt_number`
+            latest (bool): whether to retrieve the latest checkpoint or just get the one specified in the config
 
         Returns:
         -------
-            tuple[bool, Path, Path]: have_file, weights_file, optim_file
+            tuple[bool, Path, Path]: to_update, model_dir, ckpt_dir
 
         """
         # if we don't need the latest file, get the one specified
